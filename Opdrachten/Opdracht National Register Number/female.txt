@@ -1,0 +1,13 @@
+1900-1909	Maria, Anna, Elisa, Julia, Joanna
+1910-1919	Maria, Anna, Elisa, Julia, Elisabeth
+1920-1929	Maria, Anna, Yvonne, Jeanne, Elisa
+1930-1939	Maria, Anna, Yvonne, Jeanne, Marie
+1940-1949	Maria, Marie, Annie, Yvonne, Jeannine
+1950-1959	Maria, Marie, Annie, Rita, Monique
+1960-1969	Maria, Martine, Marie, Ann, Carine
+1970-1979	Kristel, Ann, Nancy, Sandra, Veerle
+1980-1989	Kim, An, Nathalie, Wendy, Inge
+1990-1999	Sarah, Laura, An, Elke, Sofie
+2000-2009	Emma, Laura, Lore, Marie, Lisa
+2010-2019	Emma, Marie, Elise, Julie, Noor
+2020-now	Olivia, Emma, Louise, Mila, Nora

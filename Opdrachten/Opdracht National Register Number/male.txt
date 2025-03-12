@@ -1,0 +1,13 @@
+1900-1909	Jan, Jozef, Petrus, Frans, August
+1910-1919	Jozef, Jan, Albert, Frans, August
+1920-1929	Jozef, Jan, Albert, Marcel, Roger
+1930-1939	Jozef, Jan, Roger, André, Marcel
+1940-1949	Jozef, Jan, Luc, Marc, André
+1950-1959	Marc, Luc, Jan, Patrick, Johan
+1960-1969	Marc, Luc, Patrick, Dirk, Johan
+1970-1979	Kristof, Bart, Tom, Steven, Peter
+1980-1989	Kevin, Tom, Bart, Steven, David
+1990-1999	Thomas, Nicolas, Kevin, Tim, Jonas
+2000-2009	Thomas, Lucas, Lars, Seppe, Wout
+2010-2019	Lucas, Noah, Liam, Arthur, Milan
+2020-now	Noah, Arthur, Liam, Louis, Lucas
