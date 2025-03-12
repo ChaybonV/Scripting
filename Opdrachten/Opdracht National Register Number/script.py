@@ -100,8 +100,9 @@ def generate_qr(register_number):
 def get_names(gender, birth_year):
     file_name = "C:/Users/chayb/Desktop/Semester 2 2024-2025/Scripting/Opdrachten/Opdracht National Register Number/male.txt" if gender.lower() == "male" else "C:/Users/chayb/Desktop/Semester 2 2024-2025/Scripting/Opdrachten/Opdracht National Register Number/female.txt"
     
-    with open(file_name, "r", encoding="utf-8") as f:
-        names_data = f.readlines()
+    f = open(file_name, "r", encoding="utf-8")
+    names_data = f.readlines()
+    f.close()
 
     for line in names_data:
         year_range, names = line.strip().split("\t")
