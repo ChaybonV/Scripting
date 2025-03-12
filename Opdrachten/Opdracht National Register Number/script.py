@@ -97,13 +97,24 @@ def generate_qr(register_number):
     img.save(f"{register_number}.png")
     print(f"image saved --> {register_number}.png")
 
-
-def get_names(gender):
-    file_name = "male.txt" if gender.lower() == "male" else "female.txt"
-
+def get_names(gender, birth_year):
+    file_name = "C:/Users/chayb/Desktop/Semester 2 2024-2025/Scripting/Opdrachten/Opdracht National Register Number/male.txt" if gender.lower() == "male" else "C:/Users/chayb/Desktop/Semester 2 2024-2025/Scripting/Opdrachten/Opdracht National Register Number/female.txt"
+    
     with open(file_name, "r", encoding="utf-8") as f:
-        names = [line.strip() for line in f.readlines()]
-    print(names[:5])
+        names_data = f.readlines()
+
+    for line in names_data:
+        year_range, names = line.strip().split("\t")
+        start_year, end_year = map(int, year_range.split("-"))
+        
+        if start_year <= birth_year <= end_year:
+            # Sla de top 5 namen op
+            top_names = names.split(", ")[:5]
+            print(top_names)
+            return top_names
+
+    print("Geen namen gevonden voor dit decennium.")
+    return []
 
 
 def main():
@@ -122,10 +133,16 @@ def main():
         generate_qr(register_number)
     elif output_type == "name":
         numbers_only = register_number.replace(".","").replace("-","")
+        birth_part = numbers_only[:6]
         sequence_part = int(numbers_only[6:9])
 
+        year_prefix = 2000 if int(numbers_only[0]) in [0, 1] else 1900
+        birth_year = year_prefix + int(birth_part[:2])
+        birth_month = int(birth_part[2:4])
+        birth_day = int(birth_part[4:6])
+
         gender = "Male" if sequence_part % 2 != 0 else "Female"
-        get_names(gender)
+        get_names(gender, birth_year)
     else:
         print("Invalid output type.")
 
