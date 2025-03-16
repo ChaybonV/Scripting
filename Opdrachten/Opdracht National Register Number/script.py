@@ -104,8 +104,9 @@ def generate_qr(register_number):
     img.save(f"{register_number}.png")
     print("image saved")
 
-def get_names(gender, birth_year):
-    file_name = "male.txt" if gender.lower() == "male" else "female.txt"
+def get_names(gender, birth_year, file_path="."):
+    # Gebruik het opgegeven pad of de huidige map als standaard
+    file_name = f"{file_path}/male.txt" if gender.lower() == "male" else f"{file_path}/female.txt"
     try:
         with open(file_name, "r", encoding="utf-8") as f:
             names_data = f.readlines()
@@ -143,7 +144,8 @@ def main():
         year_prefix = 2000 if int(numbers_only[0]) in [0, 1] else 1900
         birth_year = year_prefix + int(birth_part[:2])
         gender = "Male" if sequence_part % 2 != 0 else "Female"
-        top_names = get_names(gender, birth_year)
+        # Geef het pad naar de bestanden door
+        top_names = get_names(gender, birth_year, file_path="C:/Users/chayb/Desktop/Semester 2 2024-2025/Scripting/Opdrachten/Opdracht National Register Number")
         print(top_names)
     else:
         print("Invalid output type.")
