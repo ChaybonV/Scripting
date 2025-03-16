@@ -7,7 +7,7 @@ def is_valid_number(register_number):
     # Controleer het formaat met een reguliere expressie
     pattern = r"^\d{2}\.\d{2}\.\d{2}-\d{3}[-.]\d{2}$"
     if not re.match(pattern, register_number):
-        return False  # Ongeldig formaat
+        return "incorrect formatting"  # Formaat is incorrect
 
     numbers_only = register_number.replace(".","").replace("-","")
     birth_part = numbers_only[:6]
@@ -99,9 +99,9 @@ def generate_qr(register_number):
     # Genereer een QR-code voor het registratienummer
     img = qrcode.make(register_number)
     img.save(f"{register_number}.png")
+    print("image saved")  # Bevestiging dat de QR-code is opgeslagen
 
 def get_names(gender, birth_year):
-    # Haal namen op voor een bepaald geslacht en geboortejaar
     file_name = "C:/Users/chayb/Desktop/Semester 2 2024-2025/Scripting/Opdrachten/Opdracht National Register Number/male.txt" if gender.lower() == "male" else "C:/Users/chayb/Desktop/Semester 2 2024-2025/Scripting/Opdrachten/Opdracht National Register Number/female.txt"
     with open(file_name, "r", encoding="utf-8") as f:
         names_data = f.readlines()
@@ -113,29 +113,28 @@ def get_names(gender, birth_year):
         if start_year <= birth_year <= end_year:
             # Sla de top 5 namen op
             top_names = names.split(", ")[:5]
-            print(top_names)
             return top_names
 
-    print("Geen namen gevonden voor dit decennium.")
-    return []
+    return ["Geen namen gevonden voor dit decennium."]
 
 def main():
     # Voer de hoofdfunctie uit
-    register_number = input("Enter national register number ").strip()
+    register_number = input().strip()
     validity = check_number(register_number)
     print(validity)
 
     if "invalid" in validity:
         return
 
-    output_type = input("Enter output (table, qr-code, name) ").strip().lower()
+    output_type = input().strip().lower()
 
+    # Vergelijking voor 'name' of 'names'
     if output_type == "table":
         structured_info(register_number)
     elif output_type == "qr-code":
         generate_qr(register_number)
-    elif output_type == "name":
-        numbers_only = register_number.replace(".","").replace("-","")
+    elif output_type in ["name", "names"]:  # 'names' toevoegen hier
+        numbers_only = register_number.replace(".", "").replace("-", "")
         birth_part = numbers_only[:6]
         sequence_part = int(numbers_only[6:9])
 
@@ -143,7 +142,8 @@ def main():
         birth_year = year_prefix + int(birth_part[:2])
 
         gender = "Male" if sequence_part % 2 != 0 else "Female"
-        get_names(gender, birth_year)
+        top_names = get_names(gender, birth_year)
+        print(top_names)
     else:
         print("Invalid output type.")
 
