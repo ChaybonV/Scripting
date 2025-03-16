@@ -102,7 +102,7 @@ def structured_info(register_number):
 def generate_qr(register_number):
     img = qrcode.make(register_number)
     img.save(f"{register_number}.png")
-    print(f"image saved -->{register_number}.png")
+    print("image saved")
 
 def get_names(gender, birth_year):
     file_name = "male.txt" if gender.lower() == "male" else "female.txt"
