@@ -4,10 +4,11 @@ import qrcode
 from tabulate import tabulate
 
 def is_valid_number(register_number):
-    pattern = r"^\d{2}\.\d{2}\.\d{2}-\d{3}\.\d{2}$"
+    # Controleer het formaat met een reguliere expressie
+    pattern = r"^\d{2}\.\d{2}\.\d{2}-\d{3}[-.]\d{2}$"
     if not re.match(pattern, register_number):
-        return "incorrect formatting"
-    
+        return False  # Ongeldig formaat
+
     numbers_only = register_number.replace(".","").replace("-","")
     birth_part = numbers_only[:6]
     check_digits = int(numbers_only[9:])
@@ -18,8 +19,10 @@ def is_valid_number(register_number):
     full_year = 2000 + year if int(numbers_only[0]) in [0, 1] else 1900 + year
 
     birth_date = datetime.date(full_year, month, day)
+    
+    # Controleer of de geboortedatum in de toekomst ligt
     if birth_date > datetime.date.today():
-        return "future birth date"
+        return "future birth date"  # Geboortedatum is in de toekomst
 
     base_number = int(numbers_only[:9])
     if full_year >= 2000:
@@ -27,14 +30,15 @@ def is_valid_number(register_number):
 
     calculated_check_digits = 97 - (base_number % 97)
     if calculated_check_digits != check_digits:
-        return "incorrect check digits"
+        return False  # Controleer de checksum
 
-    return "valid"
+    return True  # Geldig nummer
 
 def check_number(register_number):
+    # Controleer of het nummer geldig is
     validity = is_valid_number(register_number)
-    if validity != "valid":
-        return f"invalid register number - {validity}"
+    if validity != True:
+        return f"invalid register number - {validity}"  # Als het nummer ongeldig is
 
     numbers_only = register_number.replace(".","").replace("-","")
     birth_part = numbers_only[:6]
@@ -66,6 +70,7 @@ def check_number(register_number):
         return f"valid register number - {generation}"
 
 def structured_info(register_number):
+    # Haal informatie op en toon in een gestructureerde tabel
     numbers_only = register_number.replace(".","").replace("-","")
     birth_part = numbers_only[:6]
     sequence_part = int(numbers_only[6:9])
@@ -81,18 +86,22 @@ def structured_info(register_number):
     gender = "Male" if sequence_part % 2 != 0 else "Female"
     generation = check_number(register_number).split("-")[-1].strip()
 
-    table = [["Date of Birth", birth_date.strftime("%B %d, %Y")],["Gender", gender],["Age", age],["Generation", generation],]
+    table = [["Date of Birth", birth_date.strftime("%B %d, %Y")],
+             ["Gender", gender],
+             ["Age", age],
+             ["Generation", generation]]
     print(tabulate(table, headers=["Field", "Value"], tablefmt="grid"))
 
 def generate_qr(register_number):
+    # Genereer een QR-code voor het registratienummer
     img = qrcode.make(register_number)
     img.save(f"{register_number}.png")
 
 def get_names(gender, birth_year):
+    # Haal namen op voor een bepaald geslacht en geboortejaar
     file_name = "C:/Users/chayb/Desktop/Semester 2 2024-2025/Scripting/Opdrachten/Opdracht National Register Number/male.txt" if gender.lower() == "male" else "C:/Users/chayb/Desktop/Semester 2 2024-2025/Scripting/Opdrachten/Opdracht National Register Number/female.txt"
-    f = open(file_name, "r", encoding="utf-8")
-    names_data = f.readlines()
-    f.close()
+    with open(file_name, "r", encoding="utf-8") as f:
+        names_data = f.readlines()
 
     for line in names_data:
         year_range, names = line.strip().split("\t")
@@ -108,6 +117,7 @@ def get_names(gender, birth_year):
     return []
 
 def main():
+    # Voer de hoofdfunctie uit
     register_number = input("Enter national register number ").strip()
     validity = check_number(register_number)
     print(validity)
