@@ -18,8 +18,11 @@ def is_valid_number(register_number):
     day = int(birth_part[4:6])
     full_year = 2000 + year if int(numbers_only[0]) in [0, 1] else 1900 + year
 
-    birth_date = datetime.date(full_year, month, day)
-    
+    try:
+        birth_date = datetime.date(full_year, month, day)
+    except ValueError:
+        return "invalid date"  # Geboortedatum is onjuist
+
     # Controleer of de geboortedatum in de toekomst ligt
     if birth_date > datetime.date.today():
         return "future birth date"  # Geboortedatum is in de toekomst
