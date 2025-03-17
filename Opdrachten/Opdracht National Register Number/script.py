@@ -5,45 +5,57 @@ from tabulate import tabulate
 
 def is_valid_number(register_number):
     numbers_only = register_number.replace(".", "").replace("-", "")
+
     if len(numbers_only) != 11:
         return "invalid length"
 
-    pattern = r"^\d{2}\.\d{2}\.\d{2}-\d{3}[-.]\d{2}$"
-    if not re.match(pattern, register_number):
+    if not numbers_only.isdigit():
+        return "non-numeric characters"
+
+    if not re.match(r"^\d{2}\.\d{2}\.\d{2}-\d{3}[-.]\d{2}$", register_number):
         return "incorrect formatting"
 
     birth_part = numbers_only[:6]
+    sequence_part = numbers_only[6:9]
     check_digits = int(numbers_only[9:])
+
     year = int(birth_part[:2])
     month = int(birth_part[2:4])
     day = int(birth_part[4:6])
+
     full_year_1900 = 1900 + year
     full_year_2000 = 2000 + year
+    today = datetime.date.today()
 
     try:
         birth_date_1900 = datetime.date(full_year_1900, month, day)
+        valid_1900 = birth_date_1900 <= today
     except ValueError:
-        return "invalid date"
-    
+        valid_1900 = False
+
     try:
         birth_date_2000 = datetime.date(full_year_2000, month, day)
+        valid_2000 = birth_date_2000 <= today
     except ValueError:
-        pass
-    
-    today = datetime.date.today()
-    if birth_date_1900 > today:
-        return "future birth date"
-    
-    full_year = full_year_2000 if birth_date_2000 <= today else full_year_1900
-    base_number = int(numbers_only[:9])
+        valid_2000 = False
 
-    if full_year >= 2000:
-        base_number += 2000000000
+    if not valid_1900 and not valid_2000:
+        return "invalid date"
+
+    if valid_2000:
+        full_year = full_year_2000
+        base_number = int(numbers_only[:9]) + 2000000000
+    else:
+        full_year = full_year_1900
+        base_number = int(numbers_only[:9])
 
     calculated_check_digits = 97 - (base_number % 97)
     if calculated_check_digits != check_digits:
         return False
-    
+
+    if full_year > today.year:
+        return "future birth date"
+
     return True
 
 def check_number(register_number):
@@ -104,9 +116,8 @@ def generate_qr(register_number):
     img.save(f"{register_number}.png")
     print("image saved")
 
-def get_names(gender, birth_year, file_path="."):
-    # Gebruik het opgegeven pad of de huidige map als standaard
-    file_name = f"{file_path}/male.txt" if gender.lower() == "male" else f"{file_path}/female.txt"
+def get_names(gender, birth_year):
+    file_name = f"C:/Users/chayb/Desktop/Semester 2 2024-2025/Scripting/Opdrachten/Opdracht National Register Number/male.txt" if gender.lower() == "male" else f"C:/Users/chayb/Desktop/Semester 2 2024-2025/Scripting/Opdrachten/Opdracht National Register Number/female.txt"
     try:
         with open(file_name, "r", encoding="utf-8") as f:
             names_data = f.readlines()
@@ -144,8 +155,7 @@ def main():
         year_prefix = 2000 if int(numbers_only[0]) in [0, 1] else 1900
         birth_year = year_prefix + int(birth_part[:2])
         gender = "Male" if sequence_part % 2 != 0 else "Female"
-        # Geef het pad naar de bestanden door
-        top_names = get_names(gender, birth_year, file_path="C:/Users/chayb/Desktop/Semester 2 2024-2025/Scripting/Opdrachten/Opdracht National Register Number")
+        top_names = get_names(gender, birth_year)
         print(top_names)
     else:
         print("Invalid output type.")
