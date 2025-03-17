@@ -17,11 +17,9 @@ def is_valid_number(register_number):
 
     birth_part = numbers_only[:6]
     check_digits = int(numbers_only[9:])
-    
     year = int(birth_part[:2])
     month = int(birth_part[2:4])
     day = int(birth_part[4:6])
-    
     full_year_1900 = 1900 + year
     full_year_2000 = 2000 + year
     today = datetime.date.today()
@@ -62,7 +60,7 @@ def check_number(register_number):
     if validity is not True:
         return f"invalid register number - {validity}"
 
-    numbers_only = register_number.replace(".", "").replace("-", "")
+    numbers_only = register_number.replace(".","").replace("-","")
     birth_part = numbers_only[:6]
     sequence_part = int(numbers_only[6:9])
     year_prefix = 2000 if int(numbers_only[:2]) < 40 else 1900
