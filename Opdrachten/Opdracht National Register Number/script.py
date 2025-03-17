@@ -5,10 +5,10 @@ from tabulate import tabulate
 
 def is_valid_number(register_number):
     numbers_only = register_number.replace(".", "").replace("-", "")
-
+    
     if len(numbers_only) != 11:
         return "invalid length"
-
+    
     if not numbers_only.isdigit():
         return "non-numeric characters"
 
@@ -16,13 +16,12 @@ def is_valid_number(register_number):
         return "incorrect formatting"
 
     birth_part = numbers_only[:6]
-    sequence_part = numbers_only[6:9]
     check_digits = int(numbers_only[9:])
-
+    
     year = int(birth_part[:2])
     month = int(birth_part[2:4])
     day = int(birth_part[4:6])
-
+    
     full_year_1900 = 1900 + year
     full_year_2000 = 2000 + year
     today = datetime.date.today()
@@ -49,27 +48,24 @@ def is_valid_number(register_number):
         full_year = full_year_1900
         base_number = int(numbers_only[:9])
 
+    if full_year > today.year:
+        return "future birth date"
+
     calculated_check_digits = 97 - (base_number % 97)
     if calculated_check_digits != check_digits:
         return False
-
-    if full_year > today.year:
-        return "future birth date"
 
     return True
 
 def check_number(register_number):
     validity = is_valid_number(register_number)
-    if validity != True:
-        if validity == False:
-            return "invalid register number - check digits"
-        else:
-            return f"invalid register number - {validity}"
+    if validity is not True:
+        return f"invalid register number - {validity}"
 
-    numbers_only = register_number.replace(".","").replace("-","")
+    numbers_only = register_number.replace(".", "").replace("-", "")
     birth_part = numbers_only[:6]
     sequence_part = int(numbers_only[6:9])
-    year_prefix = 2000 if int(numbers_only[0]) in [0, 1] else 1900
+    year_prefix = 2000 if int(numbers_only[:2]) < 40 else 1900
     birth_year = year_prefix + int(birth_part[:2])
 
     if birth_year < 1940:
@@ -98,7 +94,7 @@ def structured_info(register_number):
     numbers_only = register_number.replace(".", "").replace("-", "")
     birth_part = numbers_only[:6]
     sequence_part = int(numbers_only[6:9])
-    year_prefix = 2000 if int(numbers_only[0]) in [0, 1] else 1900
+    year_prefix = 2000 if int(numbers_only[:2]) < 40 else 1900
     birth_year = year_prefix + int(birth_part[:2])
     birth_month = int(birth_part[2:4])
     birth_day = int(birth_part[4:6])
@@ -152,7 +148,7 @@ def main():
         numbers_only = register_number.replace(".", "").replace("-", "")
         birth_part = numbers_only[:6]
         sequence_part = int(numbers_only[6:9])
-        year_prefix = 2000 if int(numbers_only[0]) in [0, 1] else 1900
+        year_prefix = 2000 if int(numbers_only[:2]) < 40 else 1900
         birth_year = year_prefix + int(birth_part[:2])
         gender = "Male" if sequence_part % 2 != 0 else "Female"
         top_names = get_names(gender, birth_year)
