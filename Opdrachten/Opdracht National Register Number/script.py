@@ -2,6 +2,7 @@ import re
 import datetime
 import qrcode
 from tabulate import tabulate
+import os
 
 def is_valid_number(register_number):
     numbers_only = register_number.replace(".", "").replace("-", "")
@@ -89,8 +90,13 @@ def structured_info(register_number):
     print(tabulate(table, tablefmt="grid"))
 
 def generate_qr(register_number):
+    file_name = f"{register_number}.png"
+    counter = 1
+    while os.path.exists(file_name):
+        file_name = f"{register_number}_{counter}.png"
+        counter += 1
     img = qrcode.make(register_number)
-    img.save(f"{register_number}.png")
+    img.save(file_name)
     print("image saved")
 
 def get_names(gender, birth_year):
