@@ -20,39 +20,24 @@ def is_valid_number(register_number):
     year = int(birth_part[:2])
     month = int(birth_part[2:4])
     day = int(birth_part[4:6])
-    full_year_1900 = 1900 + year
-    full_year_2000 = 2000 + year
     today = datetime.date.today()
-
+    
+    full_year = 1900 + year if year >= 40 else 2000 + year
     try:
-        birth_date_1900 = datetime.date(full_year_1900, month, day)
-        valid_1900 = birth_date_1900 <= today
+        birth_date = datetime.date(full_year, month, day)
+        if birth_date > today:
+            return "future birth date"
     except ValueError:
-        valid_1900 = False
-
-    try:
-        birth_date_2000 = datetime.date(full_year_2000, month, day)
-        valid_2000 = birth_date_2000 <= today
-    except ValueError:
-        valid_2000 = False
-
-    if not valid_1900 and not valid_2000:
         return "invalid date"
-
-    if valid_2000:
-        full_year = full_year_2000
-        base_number = int(numbers_only[:9]) + 2000000000
-    else:
-        full_year = full_year_1900
-        base_number = int(numbers_only[:9])
-
-    if full_year > today.year:
-        return "future birth date"
-
+    
+    base_number = int(numbers_only[:9])
+    if full_year >= 2000:
+        base_number += 2000000000
+    
     calculated_check_digits = 97 - (base_number % 97)
     if calculated_check_digits != check_digits:
         return False
-
+    
     return True
 
 def check_number(register_number):
@@ -60,12 +45,11 @@ def check_number(register_number):
     if validity is not True:
         return f"invalid register number - {validity}"
 
-    numbers_only = register_number.replace(".","").replace("-","")
+    numbers_only = register_number.replace(".", "").replace("-", "")
     birth_part = numbers_only[:6]
     sequence_part = int(numbers_only[6:9])
-    year_prefix = 2000 if int(numbers_only[:2]) < 40 else 1900
-    birth_year = year_prefix + int(birth_part[:2])
-
+    birth_year = 1900 + int(birth_part[:2]) if int(birth_part[:2]) >= 40 else 2000 + int(birth_part[:2])
+    
     if birth_year < 1940:
         generation = "pre-war generation"
     elif birth_year <= 1945:
@@ -80,7 +64,7 @@ def check_number(register_number):
         generation = "generation Z"
     else:
         generation = "generation Alpha"
-
+    
     if 1 <= sequence_part <= 100:
         return f"valid register number (early) - {generation}"
     elif 900 <= sequence_part <= 999:
@@ -92,8 +76,7 @@ def structured_info(register_number):
     numbers_only = register_number.replace(".", "").replace("-", "")
     birth_part = numbers_only[:6]
     sequence_part = int(numbers_only[6:9])
-    year_prefix = 2000 if int(numbers_only[:2]) < 40 else 1900
-    birth_year = year_prefix + int(birth_part[:2])
+    birth_year = 1900 + int(birth_part[:2]) if int(birth_part[:2]) >= 40 else 2000 + int(birth_part[:2])
     birth_month = int(birth_part[2:4])
     birth_day = int(birth_part[4:6])
     birth_date = datetime.date(birth_year, birth_month, birth_day)
@@ -146,8 +129,7 @@ def main():
         numbers_only = register_number.replace(".", "").replace("-", "")
         birth_part = numbers_only[:6]
         sequence_part = int(numbers_only[6:9])
-        year_prefix = 2000 if int(numbers_only[:2]) < 40 else 1900
-        birth_year = year_prefix + int(birth_part[:2])
+        birth_year = 1900 + int(birth_part[:2]) if int(birth_part[:2]) >= 40 else 2000 + int(birth_part[:2])
         gender = "Male" if sequence_part % 2 != 0 else "Female"
         top_names = get_names(gender, birth_year)
         print(top_names)
