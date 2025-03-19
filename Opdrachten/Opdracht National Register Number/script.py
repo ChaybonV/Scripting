@@ -12,7 +12,7 @@ def is_valid_number(register_number):
     if not numbers_only.isdigit():
         return "non-numeric characters"
 
-    if not re.match(r"^\d{2}\.\d{2}\.\d{2}-\d{3}[-.]\d{2}$", register_number):
+    if not re.match(r"^\d{2}\.\d{2}\.\d{2}-\d{3}\.\d{2}$", register_number):
         return "incorrect formatting"
 
     birth_part = numbers_only[:6]
@@ -35,7 +35,8 @@ def is_valid_number(register_number):
         base_number += 2000000000
     
     calculated_check_digits = 97 - (base_number % 97)
-    if calculated_check_digits != check_digits:
+    calculated_check_digits_alt = 97 - ((base_number + 2000000000) % 97)
+    if calculated_check_digits != check_digits and calculated_check_digits_alt != check_digits:
         return False
     
     return True
