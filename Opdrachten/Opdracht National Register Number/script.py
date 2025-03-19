@@ -35,8 +35,7 @@ def is_valid_number(register_number):
         base_number += 2000000000
     
     calculated_check_digits = 97 - (base_number % 97)
-    calculated_check_digits_alt = 97 - ((base_number + 2000000000) % 97)
-    if calculated_check_digits != check_digits and calculated_check_digits_alt != check_digits:
+    if calculated_check_digits != check_digits:
         return False
     
     return True
