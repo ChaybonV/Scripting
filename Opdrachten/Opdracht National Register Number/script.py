@@ -36,7 +36,7 @@ def is_valid_number(register_number):
     
     calculated_check_digits = 97 - (base_number % 97)
     if calculated_check_digits != check_digits:
-        return False
+        return "invalid register number"
     
     return True
 
