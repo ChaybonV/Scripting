@@ -36,7 +36,7 @@ def is_valid_number(register_number):
     
     calculated_check_digits = 97 - (base_number % 97)
     if calculated_check_digits != check_digits:
-        return "invalid register number"
+        return False
     
     return True
 
@@ -101,15 +101,18 @@ def get_names(gender, birth_year):
     except FileNotFoundError:
         return ["Names file not found."]
 
+    top_names = []
     for line in names_data:
         year_range, names = line.strip().split("\t")
-        start_year, end_year = map(int, year_range.split("-"))
+        start_year, end_year = year_range.split("-")
         
-        if start_year <= birth_year <= end_year:
+        if int(start_year) <= birth_year <= int(end_year):
             top_names = names.split(", ")[:5]
-            return top_names
+            break
 
-    return ["Geen namen gevonden voor dit decennium."]
+    if not top_names:
+        return ["Geen namen gevonden voor dit decennium."]
+    return top_names
 
 def main():
     register_number = input().strip()
