@@ -1,119 +1,265 @@
 import os
-import csv
 import re
+import csv
+import zipfile
+from pathlib import Path
 from fpdf import FPDF
 
-def count_character_dialogue(movie):
-    """Tel hoe vaak elk personage spreekt in de film."""
-    dialogue_count = {}
-    srt_file = os.path.join('Pixar', f'{movie}.srt')  # Pad naar het .srt-bestand
-    if not os.path.exists(srt_file):
-        print(f"Bestand niet gevonden: {srt_file}")
-        return {}
+def extract_zip(zip_file="Pixar.zip"):
+    extract_path = "PixarData"
 
-    with open(srt_file, 'r', encoding='utf-8-sig') as file:
-        lines = file.readlines()
-        for line in lines:
-            match = re.match(r'^([A-Za-z]+):', line)
-            if match:
-                character = match.group(1)
-                dialogue_count[character] = dialogue_count.get(character, 0) + 1
-    return dialogue_count
+    if not os.path.exists(extract_path):
+        os.makedirs(extract_path)
+    
+    with zipfile.ZipFile(zip_file, 'r') as zip_ref:
+        zip_ref.extractall(extract_path)
+    
+    return extract_path
+
+def load_movie_data(extract_path):
+    movies_data = {}
+    movie_info = {}
+    movies_csv_path = os.path.join(extract_path, "pixar_movies.csv")
+
+    with open(movies_csv_path, 'r', encoding='utf-8-sig') as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            movie_name = row["movie"]
+            movies_data[movie_name] = row
+    
+    info_csv_path = os.path.join(extract_path, "pixar_info.csv")
+    with open(info_csv_path, 'r', encoding='utf-8-sig') as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            movie_name = row["film"]
+            movie_info[movie_name] = row
+    
+    return movies_data, movie_info
+
+def count_character_dialogue(movie):
+    extract_path = extract_zip()
+    movies_data, _ = load_movie_data(extract_path)
+    
+    if movie not in movies_data:
+        return {}
+    
+    main_characters = [char.strip() for char in movies_data[movie]["main_characters"].split(",")]
+    subtitle_files = [f for f in os.listdir(extract_path) if f.endswith(".srt")]
+    movie_file = None
+    
+    for file in subtitle_files:
+        file_name = file[:-4].replace("_", " ")
+        if file_name.lower() == movie.lower():
+            movie_file = file
+            break
+    
+    if not movie_file:
+        return {}
+    
+    character_counts = {char: 0 for char in main_characters}
+    with open(os.path.join(extract_path, movie_file), 'r', encoding='utf-8-sig', errors='ignore') as f:
+        content = f.read()
+        
+        for character in main_characters:
+            character_counts[character] = len(re.findall(r'\b' + re.escape(character) + r'\b', content, re.IGNORECASE))
+    
+    return character_counts
 
 def count_quote(movie, quote):
-    """Tel hoe vaak een specifieke zin voorkomt en geef de timestamps terug."""
-    timestamps = []
-    count = 0
-    srt_file = os.path.join('Pixar', f'{movie}.srt')  # Pad naar het .srt-bestand
-    if not os.path.exists(srt_file):
-        print(f"Bestand niet gevonden: {srt_file}")
+    extract_path = extract_zip()
+    subtitle_files = [f for f in os.listdir(extract_path) if f.endswith(".srt")]
+    movie_file = None
+    
+    for file in subtitle_files:
+        file_name = file[:-4].replace("_", " ")
+        if file_name.lower() == movie.lower():
+            movie_file = file
+            break
+    
+    if not movie_file:
         return 0, []
-
-    with open(srt_file, 'r', encoding='utf-8-sig') as file:
-        lines = file.readlines()
-        for i in range(len(lines)):
-            if quote.lower() in lines[i].lower():
-                count += 1
-                timestamps.append(lines[i - 1].strip())  # Voeg de vorige regel (timestamp) toe
-    return count, timestamps
+    
+    timestamps = []
+    
+    with open(os.path.join(extract_path, movie_file), 'r', encoding='utf-8-sig', errors='ignore') as f:
+        content = f.read()
+        pattern = r'(\d+)\n([\d:,]+\s-->\s[\d:,]+)\n((?:.+\n)+?)(?:\n|\Z)'
+        matches = re.findall(pattern, content)
+        
+        for _, timestamp, dialogue in matches:
+            dialogue = dialogue.strip().replace('\n', ' ')
+            if quote.lower() in dialogue.lower():
+                timestamps.append(timestamp)
+    
+    return len(timestamps), timestamps
 
 def analyze_actors(actor):
-    """Zoek alle films waarin een acteur een personage heeft ingesproken en sorteer op IMDb-rating."""
-    movies_dict = {}
-    csv_file = os.path.join('Pixar', 'pixar_movies.csv')  # Pad naar het CSV-bestand
-    with open(csv_file, 'r', encoding='utf-8-sig') as file:
-        reader = csv.DictReader(file)
-        for row in reader:
-            print(row)  # Debug: print elke rij
-            if actor in row['main_voice_actors']:
-                movies_dict[row['movie']] = float(row['imdb_rating'])
-    return dict(sorted(movies_dict.items(), key=lambda item: item[1], reverse=True))
+    extract_path = extract_zip()
+    movies_data, _ = load_movie_data(extract_path)
+    actor_movies = []
+    
+    for movie, data in movies_data.items():
+        voice_actors = [a.strip() for a in data["main_voice_actors"].split(",")]
+        if any(actor.lower() == a.lower() for a in voice_actors):
+            actor_movies.append({
+                'title': movie,
+                'imdb_rating': float(data["imdb_rating"].split('/')[0])
+            })
+    
+    # Sort by IMDb rating (highest to lowest)
+    actor_movies.sort(key=lambda x: x['imdb_rating'], reverse=True)
+    return actor_movies
 
 def calculate_success(movie):
-    """Bereken de financiële succesratio van een film."""
-    csv_file = os.path.join('Pixar', 'pixar_movies.csv')  # Pad naar het CSV-bestand
-    with open(csv_file, 'r', encoding='utf-8-sig') as file:
-        reader = csv.DictReader(file)
-        for row in reader:
-            if row['movie'] == movie:
-                budget = float(row['budget'].strip('$').replace(',', ''))
-                box_office = float(row['total_worldwide_gross_sales'].strip('$').replace(',', ''))
-                success_ratio = box_office / budget
-                if success_ratio >= 5.0:
-                    category = 'Blockbuster'
-                elif 3.0 <= success_ratio < 5.0:
-                    category = 'Very Successful'
-                elif 2.0 <= success_ratio < 3.0:
-                    category = 'Successful'
-                elif 1.0 <= success_ratio < 2.0:
-                    category = 'Break-even or slightly profitable'
-                else:
-                    category = 'Loss'
-                return budget, box_office, success_ratio, category
-    return None, None, None, None
+    extract_path = extract_zip()
+    movies_data, movie_info = load_movie_data(extract_path)
+    
+    # Find the movie name with proper case
+    movie_name = movie
+    for name in movies_data.keys():
+        if name.lower() == movie.lower():
+            movie_name = name
+            break
+    
+    # Find movie in movie_info (case-insensitive)
+    movie_data = None
+    for name, data in movie_info.items():
+        if name.lower() == movie.lower():
+            movie_data = data
+            break
+    
+    if not movie_data:
+        return {
+            'title': movie_name,
+            'budget': 0,
+            'box_office': 0,
+            'success_ratio': 0,
+            'success_category': "Movie not found"
+        }
+    
+    try:
+        # Remove commas from numeric values before converting
+        budget = int(movie_data["budget"].replace(",", ""))
+        box_office = int(movie_data["box_office_worldwide"].replace(",", ""))
+    except (ValueError, KeyError):
+        return {
+            'title': movie_name,
+            'budget': 0,
+            'box_office': 0,
+            'success_ratio': 0,
+            'success_category': "Data error"
+        }
+    
+    ratio = box_office / budget if budget > 0 else 0
+    ratio_rounded = round(ratio, 2)  # Round to 2 decimal places
+    
+    if ratio >= 5.0:
+        category = "Blockbuster (5x+ budget)"
+    elif 3.0 <= ratio < 5.0:
+        category = "Very successful (3-5x budget)"
+    elif 2.0 <= ratio < 3.0:
+        category = "Successful (2-3x budget)"
+    elif 1.0 <= ratio < 2.0:
+        category = "Break-even or slightly profitable (1-2x budget)"
+    else:
+        category = "Loss (less than budget)"
+    
+    return {
+        'title': movie_name,
+        'budget': budget,
+        'box_office': box_office,
+        'success_ratio': ratio_rounded,
+        'success_category': category
+    }
 
 def generate_movie_pdf(movie):
-    """Genereer een PDF-rapport voor een film."""
+    extract_path = extract_zip()
+    movies_data, movie_info = load_movie_data(extract_path)
+    
+    # Find the movie with correct case
+    movie_name = movie
+    movie_data = None
+    for name, data in movies_data.items():
+        if name.lower() == movie.lower():
+            movie_data = data
+            movie_name = name  # Keep the original name with correct case
+            break
+    
+    if not movie_data:
+        return None
+    
+    success_info = calculate_success(movie)
+    
     pdf = FPDF()
     pdf.add_page()
-    pdf.set_font("Arial", size=12)
-    csv_file = os.path.join('Pixar', 'pixar_movies.csv')  # Pad naar het CSV-bestand
-    with open(csv_file, 'r', encoding='utf-8-sig') as file:
-        reader = csv.DictReader(file)
-        for row in reader:
-            if row['movie'] == movie:
-                pdf.cell(200, 10, txt=f"Movie: {row['movie']}", ln=True)
-                pdf.cell(200, 10, txt=f"Plot Summary: {row['plot_summary']}", ln=True)
-                pdf.cell(200, 10, txt=f"Director: {row['director']}", ln=True)
-                pdf.cell(200, 10, txt=f"Genre: {row['movie_genre']}", ln=True)
-                break
-    pdf.output(os.path.join('Pixar', f"{movie}_report.pdf"))  # Sla de PDF op in de Pixar-map
+    pdf.set_font("Arial", "B", 16)
+    pdf.cell(0, 10, movie_name, ln=True, align="C")
+    pdf.ln(10)
+    
+    pdf.set_font("Arial", "B", 12)
+    pdf.cell(0, 10, "Movie Information", ln=True)
+    pdf.set_font("Arial", "", 12)
+    pdf.multi_cell(0, 10, f"Release Date: {movie_data['date_released']}")
+    pdf.multi_cell(0, 10, f"Director: {movie_data['director']}")
+    pdf.multi_cell(0, 10, f"Genre: {movie_data['movie_genre']}")
+    pdf.multi_cell(0, 10, f"Rating: {movie_data['movie_rating']}")
+    pdf.multi_cell(0, 10, f"IMDb Rating: {movie_data['imdb_rating']}")
+    
+    pdf.ln(5)
+    pdf.set_font("Arial", "B", 12)
+    pdf.cell(0, 10, "Plot Summary", ln=True)
+    pdf.set_font("Arial", "", 12)
+    pdf.multi_cell(0, 10, movie_data['plot_summary'])
+    
+    pdf.ln(5)
+    pdf.set_font("Arial", "B", 12)
+    pdf.cell(0, 10, "Financial Information", ln=True)
+    pdf.set_font("Arial", "", 12)
+    pdf.multi_cell(0, 10, f"Budget: ${success_info['budget']:,}")
+    pdf.multi_cell(0, 10, f"Box Office: ${success_info['box_office']:,}")
+    pdf.multi_cell(0, 10, f"Success Ratio: {success_info['success_ratio']:.2f}")
+    pdf.multi_cell(0, 10, f"Success Category: {success_info['success_category']}")
+    
+    pdf_filename = f"{movie_name.replace(' ', '_')}_report.pdf"
+    pdf.output(pdf_filename)
+    
+    return pdf_filename
 
 def main():
-    # Vraag de gebruiker om een film en een zin om te zoeken
-    movie = input("Voer de naam van een Pixar-film in (bijv. 'Finding Nemo'): ")
-    quote = input("Voer een zin in om te zoeken (bijv. 'just keep swimming'): ")
-
-    # Analyseer de film
-    dialogue_count = count_character_dialogue(movie)
-    print(f"\n{movie}")
-    for character, count in dialogue_count.items():
-        print(f"{character}: {count} times")
-
+    movie = input("Enter a Pixar movie name: ")
+    print()
+    
+    character_counts = count_character_dialogue(movie)
+    if character_counts:
+        print(f"Character appearances in {movie}:")
+        for character, count in character_counts.items():
+            print(f"{character}: {count} times")
+        print()
+    
+    quote = input("Enter a quote to search for: ")
+    print()
+    
     count, timestamps = count_quote(movie, quote)
-    print(f"\n'{quote}' appears {count} times")
-    for timestamp in timestamps:
-        print(f"- {timestamp}")
-
-    budget, box_office, success_ratio, category = calculate_success(movie)
-    print(f"\nBudget = {budget}")
-    print(f"Box office = {box_office}")
-    print(f"Success Ratio = {success_ratio:.2f}")
-    print(f"Success Category = {category}")
-
-    # Genereer een PDF-rapport
-    generate_movie_pdf(movie)
-    print(f"\nPDF generated: Pixar/{movie}_report.pdf")
+    if count > 0:
+        print(f"The quote appears {count} times")
+        for timestamp in timestamps:
+            print(f"- {timestamp}")
+        print()
+    else:
+        print(f"Quote '{quote}' not found in {movie}")
+        print()
+    
+    success_info = calculate_success(movie)
+    if success_info['budget'] > 0:
+        print(f"Budget = {success_info['budget']}")
+        print(f"Box office = {success_info['box_office']}")
+        print(f"Success Ratio = {success_info['success_ratio']:.2f}")
+        print(f"Success Category = {success_info['success_category']}")
+        print()
+    
+    pdf_path = generate_movie_pdf(movie)
+    if pdf_path:
+        print(f"PDF generated: {pdf_path}")
 
 if __name__ == "__main__":
     main()
