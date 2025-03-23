@@ -25,8 +25,7 @@ def is_valid_number(register_number):
     
     full_year = 1900 + year if year >= 40 else 2000 + year
     try:
-        birth_date = datetime.date(full_year, month, day)
-        if birth_date > today:
+        if datetime.date(full_year, month, day) > today:
             return "future birth date"
     except ValueError:
         return "invalid date"
@@ -48,7 +47,6 @@ def check_number(register_number):
 
     numbers_only = register_number.replace(".", "").replace("-", "")
     birth_part = numbers_only[:6]
-    sequence_part = int(numbers_only[6:9])
     birth_year = 1900 + int(birth_part[:2]) if int(birth_part[:2]) >= 40 else 2000 + int(birth_part[:2])
     
     if birth_year < 1940:
@@ -66,9 +64,9 @@ def check_number(register_number):
     else:
         generation = "generation Alpha"
     
-    if 1 <= sequence_part <= 100:
+    if 1 <= int(numbers_only[6:9]) <= 100:
         return f"valid register number (early) - {generation}"
-    elif 900 <= sequence_part <= 999:
+    elif 900 <= int(numbers_only[6:9]) <= 999:
         return f"valid register number (late) - {generation}"
     else:
         return f"valid register number - {generation}"
@@ -80,13 +78,12 @@ def structured_info(register_number):
     birth_year = 1900 + int(birth_part[:2]) if int(birth_part[:2]) >= 40 else 2000 + int(birth_part[:2])
     birth_month = int(birth_part[2:4])
     birth_day = int(birth_part[4:6])
-    birth_date = datetime.date(birth_year, birth_month, birth_day)
     today = datetime.date.today()
     age = today.year - birth_year - ((today.month, today.day) < (birth_month, birth_day))
     gender = "Male" if sequence_part % 2 != 0 else "Female"
     generation = check_number(register_number).split("-")[-1].strip()
 
-    table = [["Date of Birth", birth_date.strftime("%B %d, %Y")],["Gender", gender],["Age", age],["Generation", generation]]
+    table = [["Date of Birth", datetime.date(birth_year, birth_month, birth_day).strftime("%B %d, %Y")],["Gender", gender],["Age", age],["Generation", generation]]
     print(tabulate(table, tablefmt="grid"))
 
 def generate_qr(register_number):
@@ -122,10 +119,9 @@ def get_names(gender, birth_year):
 
 def main():
     register_number = input().strip()
-    validity = check_number(register_number)
-    print(validity)
+    print(check_number(register_number))
 
-    if "invalid" in validity:
+    if "invalid" in check_number(register_number):
         return
 
     output_type = input().strip().lower()
