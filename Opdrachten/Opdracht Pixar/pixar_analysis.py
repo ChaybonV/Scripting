@@ -14,6 +14,13 @@ def extract_zip(zip_file="Pixar.zip"):
     with zipfile.ZipFile(zip_file, 'r') as zip_ref:
         zip_ref.extractall(extract_path)
     
+    # Controleer of .srt bestanden in de uitgepakte map staan
+    subtitle_files = [f for f in os.listdir(extract_path) if f.endswith(".srt")]
+    if subtitle_files:
+        print("Subtitle files extracted:", subtitle_files)
+    else:
+        print("No subtitle files found in the extracted directory.")
+    
     return extract_path
 
 def load_movie_data(extract_path):
@@ -71,39 +78,57 @@ def count_quote(movie, quote):
     subtitle_files = [f for f in os.listdir(extract_path) if f.endswith(".srt")]
     movie_file = None
 
+    # Verander de filmnaam in hetzelfde formaat als de .srt-bestanden
+    movie_name_clean = movie.replace(" ", ".").title()
+
     for file in subtitle_files:
-        file_name = file[:-4].replace("_", " ")
-        if file_name.lower() == movie.lower():
+        file_name_clean = file[:-4]
+        if file_name_clean == movie_name_clean:
             movie_file = file
             break
 
     if not movie_file:
+        print("Movie file not found!")
         return 0, []
+
+    print(f"Movie file found: {movie_file}")  # Extra logging om te bevestigen welk bestand is gevonden
 
     timestamps = []
 
-    with open(os.path.join(extract_path, movie_file), 'r', encoding='utf-8-sig', errors='ignore') as f:
-        lines = f.readlines()
+    try:
+        with open(os.path.join(extract_path, movie_file), 'r', encoding='utf-8-sig', errors='ignore') as f:
+            lines = f.readlines()
 
-    index = 0
-    while index < len(lines):
-        line = lines[index].strip()
-
-        if re.match(r'^\d{2}:\d{2}:\d{2},\d{3} --> \d{2}:\d{2}:\d{2},\d{3}$', line):
-            timestamp = line
-            index += 1
+            timestamp = None
             dialogue_lines = []
 
-            while index < len(lines) and lines[index].strip():
-                dialogue_lines.append(lines[index].strip())
-                index += 1  # Ga door tot lege regel
+            for line in lines:
+                line = line.strip()
 
-            full_dialogue = " ".join(dialogue_lines)
-            if quote.lower() in full_dialogue.lower():
-                timestamps.append((timestamp, full_dialogue))
+                # Detecteer een timestampregel (bv. "00:45:01,699 --> 00:45:02,741")
+                if re.match(r'^\d{2}:\d{2}:\d{2},\d{3} --> \d{2}:\d{2}:\d{2},\d{3}$', line):
+                    timestamp = line
+                    dialogue_lines = []  # Reset de dialoogregels
+                    continue
 
-        index += 1  # Spring naar de volgende sectie
+                # Verzamel dialoogregels
+                if line:
+                    dialogue_lines.append(line)
 
+                # Controleer na een lege regel of de dialoog de quote bevat
+                if not line and timestamp and dialogue_lines:
+                    full_dialogue = " ".join(dialogue_lines)  # Maak een enkele string
+                    if quote.lower() in full_dialogue.lower():  # Verwijder de hoofdlettergevoeligheid
+                        timestamps.append((timestamp, full_dialogue))
+                    timestamp = None
+                    dialogue_lines = []
+
+    except Exception as e:
+        print(f"Error reading subtitle file: {e}")
+
+    # Controleer of we meerdere keren een quote kunnen vinden en geef het resultaat terug
+    if not timestamps:
+        print(f"No instances of '{quote}' found in the movie.")
     return len(timestamps), timestamps
 
 def analyze_actors(actor):
