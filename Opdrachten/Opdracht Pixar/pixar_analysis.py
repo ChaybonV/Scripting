@@ -39,58 +39,71 @@ def load_movie_data(extract_path):
 def count_character_dialogue(movie):
     extract_path = extract_zip()
     movies_data, _ = load_movie_data(extract_path)
-    
+
     if movie not in movies_data:
         return {}
-    
+
     main_characters = [char.strip() for char in movies_data[movie]["main_characters"].split(",")]
     subtitle_files = [f for f in os.listdir(extract_path) if f.endswith(".srt")]
     movie_file = None
-    
+
     for file in subtitle_files:
         file_name = file[:-4].replace("_", " ")
         if file_name.lower() == movie.lower():
             movie_file = file
             break
-    
+
     if not movie_file:
         return {}
-    
+
     character_counts = {char: 0 for char in main_characters}
+
     with open(os.path.join(extract_path, movie_file), 'r', encoding='utf-8-sig', errors='ignore') as f:
-        content = f.read()
-        
-        for character in main_characters:
-            character_counts[character] = len(re.findall(r'\b' + re.escape(character) + r'\b', content, re.IGNORECASE))
-    
+        for line in f:
+            for character in main_characters:
+                if re.search(r'\b' + re.escape(character) + r'\b', line, re.IGNORECASE):
+                    character_counts[character] += 1
+
     return character_counts
 
 def count_quote(movie, quote):
     extract_path = extract_zip()
     subtitle_files = [f for f in os.listdir(extract_path) if f.endswith(".srt")]
     movie_file = None
-    
+
     for file in subtitle_files:
         file_name = file[:-4].replace("_", " ")
         if file_name.lower() == movie.lower():
             movie_file = file
             break
-    
+
     if not movie_file:
         return 0, []
-    
+
     timestamps = []
-    
+
     with open(os.path.join(extract_path, movie_file), 'r', encoding='utf-8-sig', errors='ignore') as f:
-        content = f.read()
-        pattern = r'(\d+)\n([\d:,]+\s-->\s[\d:,]+)\n((?:.+\n)+?)(?:\n|\Z)'
-        matches = re.findall(pattern, content)
-        
-        for _, timestamp, dialogue in matches:
-            dialogue = dialogue.strip().replace('\n', ' ')
-            if quote.lower() in dialogue.lower():
-                timestamps.append(timestamp)
-    
+        lines = f.readlines()
+
+    index = 0
+    while index < len(lines):
+        line = lines[index].strip()
+
+        if re.match(r'^\d{2}:\d{2}:\d{2},\d{3} --> \d{2}:\d{2}:\d{2},\d{3}$', line):
+            timestamp = line
+            index += 1
+            dialogue_lines = []
+
+            while index < len(lines) and lines[index].strip():
+                dialogue_lines.append(lines[index].strip())
+                index += 1  # Ga door tot lege regel
+
+            full_dialogue = " ".join(dialogue_lines)
+            if quote.lower() in full_dialogue.lower():
+                timestamps.append((timestamp, full_dialogue))
+
+        index += 1  # Spring naar de volgende sectie
+
     return len(timestamps), timestamps
 
 def analyze_actors(actor):
