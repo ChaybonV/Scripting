@@ -77,8 +77,6 @@ def count_quote(movie, quote):
     extract_path = extract_zip()
     subtitle_files = [f for f in os.listdir(extract_path) if f.endswith(".srt")]
     movie_file = None
-
-    # Change the movie name to the same format as .srt files
     movie_name_clean = movie.replace(" ", ".").title()
 
     for file in subtitle_files:
@@ -102,22 +100,17 @@ def count_quote(movie, quote):
 
             for line in lines:
                 line = line.strip()
-
-                # Detect timestamp line (e.g. "00:45:01,699 --> 00:45:02,741")
                 if re.match(r'^\d{2}:\d{2}:\d{2},\d{3} --> \d{2}:\d{2}:\d{2},\d{3}$', line):
                     timestamp = line
-                    dialogue_lines = []  # Reset dialogue lines
+                    dialogue_lines = []
                     continue
 
-                # Collect dialogue lines
                 if line:
                     dialogue_lines.append(line)
 
-                # Check after an empty line if the dialogue contains the quote
                 if not line and timestamp and dialogue_lines:
-                    full_dialogue = " ".join(dialogue_lines)  # Make a single string
-                    if quote.lower() in full_dialogue.lower():  # Remove case sensitivity
-                        # Only append the exact quote, not the full dialogue
+                    full_dialogue = " ".join(dialogue_lines)
+                    if quote.lower() in full_dialogue.lower():
                         timestamps.append((timestamp, quote))
                     timestamp = None
                     dialogue_lines = []
@@ -125,7 +118,6 @@ def count_quote(movie, quote):
     except Exception as e:
         print(f"Error reading subtitle file: {e}")
 
-    # Check if we can find the quote multiple times and return the result
     if not timestamps:
         print(f"No instances of '{quote}' found in the movie.")
     return len(timestamps), timestamps
