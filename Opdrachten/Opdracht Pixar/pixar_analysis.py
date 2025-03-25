@@ -226,7 +226,7 @@ def generate_movie_pdf(movie):
     return pdf_filename
 
 def main():
-    movie = input("Enter a Pixar movie name: ")
+    movie = input() #movie name
     print()
     
     character_counts = count_character_dialogue(movie)
@@ -235,7 +235,7 @@ def main():
     print()
     
     if character_counts and list(character_counts.values()) != [0] * len(character_counts):
-        quote = input("Enter a quote to search for: ")
+        quote = input() #qoute to search
         print()
         
         count, timestamps = count_quote(movie, quote)
