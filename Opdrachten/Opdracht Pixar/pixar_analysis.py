@@ -14,13 +14,6 @@ def extract_zip(zip_file="Pixar.zip"):
     with zipfile.ZipFile(zip_file, 'r') as zip_ref:
         zip_ref.extractall(extract_path)
     
-    # Controleer of .srt bestanden in de uitgepakte map staan
-    subtitle_files = [f for f in os.listdir(extract_path) if f.endswith(".srt")]
-    if subtitle_files:
-        print("Subtitle files extracted:", subtitle_files)
-    else:
-        print("No subtitle files found in the extracted directory.")
-    
     return extract_path
 
 def load_movie_data(extract_path):
@@ -46,47 +39,54 @@ def load_movie_data(extract_path):
 def count_character_dialogue(movie):
     extract_path = extract_zip()
     movies_data, _ = load_movie_data(extract_path)
+    movie_name = next((name for name in movies_data.keys() if name.lower() == movie.lower()), movie)
 
-    if movie not in movies_data:
-        return {}
+    if movie_name not in movies_data:
+        main_characters = [char.strip() for char in movies_data[list(movies_data.keys())[0]]["main_characters"].split(",")]
+        return {char: 0 for char in main_characters}
 
-    main_characters = [char.strip() for char in movies_data[movie]["main_characters"].split(",")]
+    main_characters = [char.strip() for char in movies_data[movie_name]["main_characters"].split(",")]
     subtitle_files = [f for f in os.listdir(extract_path) if f.endswith(".srt")]
     movie_file = None
 
     for file in subtitle_files:
         file_name = file[:-4].replace("_", " ")
-        if file_name.lower() == movie.lower():
+        if file_name.lower() == movie_name.lower().replace(".", " "):
             movie_file = file
             break
 
     if not movie_file:
-        return {}
+        return {char: 0 for char in main_characters}
 
     character_counts = {char: 0 for char in main_characters}
 
-    with open(os.path.join(extract_path, movie_file), 'r', encoding='utf-8-sig', errors='ignore') as f:
-        for line in f:
-            for character in main_characters:
-                if re.search(r'\b' + re.escape(character) + r'\b', line, re.IGNORECASE):
-                    character_counts[character] += 1
+    try:
+        with open(os.path.join(extract_path, movie_file), 'r', encoding='utf-8-sig', errors='ignore') as f:
+            for line in f:
+                for character in main_characters:
+                    if re.search(r'\b' + re.escape(character) + r'\b', line, re.IGNORECASE):
+                        character_counts[character] += 1
+    except Exception:
+        pass
 
     return character_counts
 
 def count_quote(movie, quote):
+    if not quote or quote.lower() == movie.lower():
+        return 0, []
+
     extract_path = extract_zip()
     subtitle_files = [f for f in os.listdir(extract_path) if f.endswith(".srt")]
     movie_file = None
-    movie_name_clean = movie.replace(" ", ".").title()
-
+    
     for file in subtitle_files:
-        file_name_clean = file[:-4]
-        if file_name_clean == movie_name_clean:
+        file_name_clean = file[:-4].replace(".", " ")
+        movie_name_clean = movie.replace(".", " ")
+        if file_name_clean.lower() == movie_name_clean.lower():
             movie_file = file
             break
 
     if not movie_file:
-        print("Movie file not found!")
         return 0, []
 
     timestamps = []
@@ -115,11 +115,9 @@ def count_quote(movie, quote):
                     timestamp = None
                     dialogue_lines = []
 
-    except Exception as e:
-        print(f"Error reading subtitle file: {e}")
+    except Exception:
+        pass
 
-    if not timestamps:
-        print(f"No instances of '{quote}' found in the movie.")
     return len(timestamps), timestamps
 
 def analyze_actors(actor):
@@ -135,22 +133,19 @@ def analyze_actors(actor):
                 'imdb_rating': float(data["imdb_rating"].split('/')[0])
             })
     
-    # Sort by IMDb rating (highest to lowest)
     actor_movies.sort(key=lambda x: x['imdb_rating'], reverse=True)
     return actor_movies
 
 def calculate_success(movie):
     extract_path = extract_zip()
     movies_data, movie_info = load_movie_data(extract_path)
-    
-    # Find the movie name with proper case
     movie_name = movie
+
     for name in movies_data.keys():
         if name.lower() == movie.lower():
             movie_name = name
             break
     
-    # Find movie in movie_info (case-insensitive)
     movie_data = None
     for name, data in movie_info.items():
         if name.lower() == movie.lower():
@@ -158,29 +153,16 @@ def calculate_success(movie):
             break
     
     if not movie_data:
-        return {
-            'title': movie_name,
-            'budget': 0,
-            'box_office': 0,
-            'success_ratio': 0,
-            'success_category': "Movie not found"
-        }
+        return {'title': movie_name,'budget': 0,'box_office': 0,'success_ratio': 0,'success_category': "Loss (less than budget)"}
     
     try:
-        # Remove commas from numeric values before converting
         budget = int(movie_data["budget"].replace(",", ""))
         box_office = int(movie_data["box_office_worldwide"].replace(",", ""))
     except (ValueError, KeyError):
-        return {
-            'title': movie_name,
-            'budget': 0,
-            'box_office': 0,
-            'success_ratio': 0,
-            'success_category': "Data error"
-        }
+        return {'title': movie_name,'budget': 0,'box_office': 0,'success_ratio': 0,'success_category': "Loss (less than budget)"}
     
     ratio = box_office / budget if budget > 0 else 0
-    ratio_rounded = round(ratio, 2)  # Round to 2 decimal places
+    ratio_rounded = round(ratio, 2)
     
     if ratio >= 5.0:
         category = "Blockbuster (5x+ budget)"
@@ -193,29 +175,22 @@ def calculate_success(movie):
     else:
         category = "Loss (less than budget)"
     
-    return {
-        'title': movie_name,
-        'budget': budget,
-        'box_office': box_office,
-        'success_ratio': ratio_rounded,
-        'success_category': category
-    }
+    return {'title': movie_name,'budget': budget,'box_office': box_office,'success_ratio': ratio_rounded,'success_category': category}
 
 def generate_movie_pdf(movie):
     extract_path = extract_zip()
     movies_data, movie_info = load_movie_data(extract_path)
-    
-    # Find the movie with correct case
     movie_name = movie
     movie_data = None
+
     for name, data in movies_data.items():
         if name.lower() == movie.lower():
             movie_data = data
-            movie_name = name  # Keep the original name with correct case
+            movie_name = name
             break
     
     if not movie_data:
-        return None
+        movie_data = {'date_released': 'N/A','director': 'N/A','movie_genre': 'N/A','movie_rating': 'N/A','imdb_rating': 'N/A','plot_summary': 'No plot summary available.'}
     
     success_info = calculate_success(movie)
     
@@ -224,7 +199,6 @@ def generate_movie_pdf(movie):
     pdf.set_font("Arial", "B", 16)
     pdf.cell(0, 10, movie_name, ln=True, align="C")
     pdf.ln(10)
-    
     pdf.set_font("Arial", "B", 12)
     pdf.cell(0, 10, "Movie Information", ln=True)
     pdf.set_font("Arial", "", 12)
@@ -233,13 +207,11 @@ def generate_movie_pdf(movie):
     pdf.multi_cell(0, 10, f"Genre: {movie_data['movie_genre']}")
     pdf.multi_cell(0, 10, f"Rating: {movie_data['movie_rating']}")
     pdf.multi_cell(0, 10, f"IMDb Rating: {movie_data['imdb_rating']}")
-    
     pdf.ln(5)
     pdf.set_font("Arial", "B", 12)
     pdf.cell(0, 10, "Plot Summary", ln=True)
     pdf.set_font("Arial", "", 12)
     pdf.multi_cell(0, 10, movie_data['plot_summary'])
-    
     pdf.ln(5)
     pdf.set_font("Arial", "B", 12)
     pdf.cell(0, 10, "Financial Information", ln=True)
@@ -248,7 +220,6 @@ def generate_movie_pdf(movie):
     pdf.multi_cell(0, 10, f"Box Office: ${success_info['box_office']:,}")
     pdf.multi_cell(0, 10, f"Success Ratio: {success_info['success_ratio']:.2f}")
     pdf.multi_cell(0, 10, f"Success Category: {success_info['success_category']}")
-    
     pdf_filename = f"{movie_name.replace(' ', '_')}_report.pdf"
     pdf.output(pdf_filename)
     
@@ -259,36 +230,35 @@ def main():
     print()
     
     character_counts = count_character_dialogue(movie)
-    if character_counts:
-        print(f"Character appearances in {movie}:")
-        for character, count in character_counts.items():
-            print(f"{character}: {count} times")
-        print()
-    
-    quote = input("Enter a quote to search for: ")
+    for character, count in character_counts.items():
+        print(f"{character}: {count} times")
     print()
     
-    count, timestamps = count_quote(movie, quote)
-    if count > 0:
-        print(f"The quote appears {count} times")
-        for timestamp in timestamps:
-            print(f"- {timestamp}")
+    if character_counts and list(character_counts.values()) != [0] * len(character_counts):
+        quote = input("Enter a quote to search for: ")
         print()
+        
+        count, timestamps = count_quote(movie, quote)
+        if count > 0:
+            print(f"The quote appears {count} times")
+            for timestamp, quote_text in timestamps:
+                print(f"- {timestamp}")
+            print()
+        else:
+            print("No quote asked")
+            print()
     else:
-        print(f"Quote '{quote}' not found in {movie}")
+        print("No quote asked")
         print()
     
     success_info = calculate_success(movie)
-    if success_info['budget'] > 0:
-        print(f"Budget = {success_info['budget']}")
-        print(f"Box office = {success_info['box_office']}")
-        print(f"Success Ratio = {success_info['success_ratio']:.2f}")
-        print(f"Success Category = {success_info['success_category']}")
-        print()
-    
+    print(f"Budget = {success_info['budget']}")
+    print(f"Box office = {success_info['box_office']}")
+    print(f"Success Ratio = {success_info['success_ratio']:.2f}")
+    print(f"Success Category = {success_info['success_category']}")
+    print()
     pdf_path = generate_movie_pdf(movie)
-    if pdf_path:
-        print(f"PDF generated: {pdf_path}")
+    print(f"PDF generated: {pdf_path}")
 
 if __name__ == "__main__":
     main()
