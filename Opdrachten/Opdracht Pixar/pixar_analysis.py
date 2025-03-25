@@ -78,7 +78,7 @@ def count_quote(movie, quote):
     subtitle_files = [f for f in os.listdir(extract_path) if f.endswith(".srt")]
     movie_file = None
 
-    # Verander de filmnaam in hetzelfde formaat als de .srt-bestanden
+    # Change the movie name to the same format as .srt files
     movie_name_clean = movie.replace(" ", ".").title()
 
     for file in subtitle_files:
@@ -90,8 +90,6 @@ def count_quote(movie, quote):
     if not movie_file:
         print("Movie file not found!")
         return 0, []
-
-    print(f"Movie file found: {movie_file}")  # Extra logging om te bevestigen welk bestand is gevonden
 
     timestamps = []
 
@@ -105,28 +103,29 @@ def count_quote(movie, quote):
             for line in lines:
                 line = line.strip()
 
-                # Detecteer een timestampregel (bv. "00:45:01,699 --> 00:45:02,741")
+                # Detect timestamp line (e.g. "00:45:01,699 --> 00:45:02,741")
                 if re.match(r'^\d{2}:\d{2}:\d{2},\d{3} --> \d{2}:\d{2}:\d{2},\d{3}$', line):
                     timestamp = line
-                    dialogue_lines = []  # Reset de dialoogregels
+                    dialogue_lines = []  # Reset dialogue lines
                     continue
 
-                # Verzamel dialoogregels
+                # Collect dialogue lines
                 if line:
                     dialogue_lines.append(line)
 
-                # Controleer na een lege regel of de dialoog de quote bevat
+                # Check after an empty line if the dialogue contains the quote
                 if not line and timestamp and dialogue_lines:
-                    full_dialogue = " ".join(dialogue_lines)  # Maak een enkele string
-                    if quote.lower() in full_dialogue.lower():  # Verwijder de hoofdlettergevoeligheid
-                        timestamps.append((timestamp, full_dialogue))
+                    full_dialogue = " ".join(dialogue_lines)  # Make a single string
+                    if quote.lower() in full_dialogue.lower():  # Remove case sensitivity
+                        # Only append the exact quote, not the full dialogue
+                        timestamps.append((timestamp, quote))
                     timestamp = None
                     dialogue_lines = []
 
     except Exception as e:
         print(f"Error reading subtitle file: {e}")
 
-    # Controleer of we meerdere keren een quote kunnen vinden en geef het resultaat terug
+    # Check if we can find the quote multiple times and return the result
     if not timestamps:
         print(f"No instances of '{quote}' found in the movie.")
     return len(timestamps), timestamps
