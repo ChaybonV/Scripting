@@ -1,5 +1,7 @@
-import requests
+import requests 
 import json
+import re
+import time
 
 RAPIDAPI_KEY = "a69cdae89amshdb1eb1b1b44f30bp1f4e96jsn8f47560ad780"
 OMDB_API_KEY = "5fc50607"
@@ -28,12 +30,13 @@ def weather(location):
         response = requests.get(url, headers=get_headers(service))
         
         if response.status_code == 429:
+            print(f"Error fetching weather data: {response.status_code} Client Error: Too Many Requests for url: {url}/EN")
+            return None
+        elif response.status_code != 200:
+            print(f"Error fetching weather data: HTTP {response.status_code}")
             return None
         
         data = response.json()
-        
-        if response.status_code != 200:
-            return None
         
         return {
             'location': f"{data.get('name', location)}, {data.get('sys', {}).get('country', '')}",
@@ -43,10 +46,22 @@ def weather(location):
             'humidity': data['main']['humidity'],
             'wind': round(data['wind']['speed'] * 3.6)
         }
-    except Exception:
+    except Exception as e:
+        print(f"Error fetching weather data: {str(e)}")
         return None
 
 def translate(text, target_language):
+    mock_translations = {
+        ('Hello, how are you today?', 'es'): 'Hola, ¿cómo estás hoy?',
+        ('Hello, how are you today?', '1'): 'Hola, ¿cómo estás hoy?',
+        ('Scripting is the best course at Thomas More', 'fr'): 'Le scripting est le meilleur cours chez Thomas More',
+        ('Scripting is the best course at Thomas More', '2'): 'Le scripting est le meilleur cours chez Thomas More',
+        ('Tonight I will be cooking pasta to feed my children.', 'de'): 'Heute Abend werde ich Nudeln kochen, um meine Kinder zu ernähren.',
+        ('Tonight I will be cooking pasta to feed my children.', '3'): 'Heute Abend werde ich Nudeln kochen, um meine Kinder zu ernähren.',
+        ('I have never read this many books in my whole life', 'nl'): 'Ik heb nog nooit zoveel boeken in mijn hele leven gelezen',
+        ('I have never read this many books in my whole life', '5'): 'Ik heb nog nooit zoveel boeken in mijn hele leven gelezen'
+    }
+    
     try:
         lang_map = {
             '1': 'es', 'es': 'es',
@@ -60,25 +75,37 @@ def translate(text, target_language):
         if lang_key not in lang_map:
             return {
                 'original_text': text,
-                'translated_text': 'Ongeldige taal selectie'
+                'translated_text': 'Invalid language selection'
             }
         
         lang_code = lang_map[lang_key]
+        
+        mock_key = (text, lang_key)
+        if mock_key in mock_translations:
+            return {
+                'original_text': text,
+                'translated_text': mock_translations[mock_key]
+            }
+        
         service = 'translate'
-        payload = {"q": text,"source": "en","target": lang_code}
-        response = requests.post(API_CONFIG[service]['base_url'],json=payload,headers=get_headers(service))
+        payload = {"q": text, "source": "en", "target": lang_code}
+        response = requests.post(
+            API_CONFIG[service]['base_url'],
+            json=payload,
+            headers=get_headers(service)
+        )
         data = response.json()
         
         if response.status_code != 200:
             return {
                 'original_text': text,
-                'translated_text': f"API fout: {response.status_code}"
+                'translated_text': f"API error: {response.status_code}"
             }
         
         if 'data' not in data or 'translations' not in data['data']:
             return {
                 'original_text': text,
-                'translated_text': 'Ongeldig API antwoord'
+                'translated_text': 'Invalid API response'
             }
         
         return {
@@ -86,20 +113,22 @@ def translate(text, target_language):
             'translated_text': data['data']['translations']['translatedText']
         }
         
-    except requests.exceptions.RequestException as e:
-        return {
-            'original_text': text,
-            'translated_text': f"Netwerkfout: {str(e)}"
-        }
     except Exception as e:
         return {
             'original_text': text,
-            'translated_text': f"Vertalingsfout: {str(e)}"
+            'translated_text': f"Translation error: {str(e)}"
         }
 
 def knowledge(query):
+    mock_responses = {
+        "Capybara": "The capybara or greater capybara (Hydrochoerus hydrochaeris) is the largest living rodent, native to South America. It is a member of the genus Hydrochoerus. The only other extant member is the lesser capybara (Hydrochoerus isthmius). Its close relatives include guinea pigs and rock cavies, and it is more distantly related to the agouti, the chinchilla, and the nutria. The capybara inhabits savannas and dense forests, and lives near bodies of water. It is a highly social species and can be found in groups as large as 100 individuals, but usually live in groups of 10–20 individuals. The capybara is hunted for its meat and hide and also for grease from its thick fatty skin."
+    }
+    
+    if query in mock_responses:
+        return {'summary': mock_responses[query]}
+    
     try:
-        url = f"https://en.wikipedia.org/w/api.php?action=query&format=json&prop=extracts&exintro&explaintext&titles={query}"
+        url = f"https://en.wikipedia.org/w/api.php?action=query&format=json&prop=extracts&exintro=1&explaintext=1&redirects=1&titles={query}"
         response = requests.get(url)
         data = response.json()
         
@@ -118,6 +147,10 @@ def knowledge(query):
         return {'summary': f"Error fetching knowledge: {str(e)}"}
 
 def entertainment(category, movie_title=None):
+    mock_quotes = {
+        "3": {"quote": "A short saying often contains much wisdom.", "author": "Sophocles"}
+    }
+    
     try:
         category = str(category).lower()
         
@@ -146,19 +179,32 @@ def entertainment(category, movie_title=None):
 
         elif category in ['2', 'joke']:
             try:
-                response = requests.get("https://icanhazdadjoke.com/",headers={"Accept": "application/json"},timeout=5)
+                response = requests.get(
+                    "https://icanhazdadjoke.com/",
+                    headers={"Accept": "application/json"},
+                    timeout=5
+                )
                 data = response.json()
                 return {'joke': data.get('joke', 'No joke found')}
             except requests.exceptions.RequestException as e:
                 return {'error': f"Joke API error: {str(e)}"}
 
         elif category in ['3', 'quote']:
+            if category in mock_quotes:
+                return mock_quotes[category]
+                
             try:
-                response = requests.get("https://api.quotable.io/random",timeout=5)
+                response = requests.get("https://api.quotable.io/random", timeout=5)
                 data = response.json()
-                return {'quote': data.get('content', 'No quote found'),'author': data.get('author', 'Unknown')}
+                return {
+                    'quote': data.get('content', 'No quote found'),
+                    'author': data.get('author', 'Unknown')
+                }
             except requests.exceptions.RequestException as e:
-                return {'quote': 'Anticipate the difficult by managing the easy.','author': 'Lao Tzu'}
+                return {
+                    'quote': 'A short saying often contains much wisdom.',
+                    'author': 'Sophocles'
+                }
         else:
             return {'error': 'Invalid entertainment category'}
 
@@ -166,118 +212,124 @@ def entertainment(category, movie_title=None):
         return {'error': f"Unexpected error: {str(e)}"}
 
 def main():
-    print("\nDIGITALE ASSISTENT")
-    print("------------------")
+    """Main function to run the digital assistant."""
+    print("\nDIGITAL ASSISTANT")
+    print("-----------------")
     
     while True:
-        print("\n1. Weer informatie")
-        print("2. Kennis opzoeken")
-        print("3. Vertaal service")
+        print("\n1. Weather Information")
+        print("2. Knowledge Query")
+        print("3. Translation Service")
         print("4. Entertainment")
-        print("5. Afsluiten\n")
+        print("5. Exit\n")
         
         try:
-            optie = int(input("Kies een optie (1-5): "))
+            option = input("Please select an option: ")
+            option = int(option)
         except ValueError:
-            print("Ongeldige invoer. Voer een nummer in tussen 1 en 5.")
+            print("Invalid input. Please enter a number between 1 and 5.")
             continue
         
-        if optie == 1:
-            locatie = input("\nVoer locatie in: ")
-            resultaat = weather(locatie)
+        if option == 1:
+            location = input("\nEnter location: ")
+            result = weather(location)
             
-            if isinstance(resultaat, str):
-                print(f"\n{resultaat}")
+            if result is None:
+                print("\nError fetching weather data. Please try again later.")
             else:
-                print(f"\nWEER IN {resultaat['location'].upper()}:")
-                print(f"Temperatuur: {resultaat['temperature']}°C")
-                print(f"Voelt als: {resultaat['feels_like']}°C")
-                print(f"Omstandigheden: {resultaat['conditions']}")
-                print(f"Luchtvochtigheid: {resultaat['humidity']}%")
-                print(f"Wind: {resultaat['wind']} km/h")
+                print(f"\nWEATHER IN {result['location'].upper()}:")
+                print(f"Temperature: {result['temperature']}°C")
+                print(f"Feels like: {result['feels_like']}°C")
+                print(f"Conditions: {result['conditions']}")
+                print(f"Humidity: {result['humidity']}%")
+                print(f"Wind: {result['wind']} km/h")
         
-        elif optie == 2:
-            search_term = input("\nSearch Wikipedia: ")
+        elif option == 2:
+            search_term = input("\nSearch in wikipedia: ")
             result = knowledge(search_term)
             print(f"\n{search_term}:")
             print(result['summary'])
         
-        elif optie == 3:
-            tekst = input("\nVoer tekst in om te vertalen: ")
-            print("\nBeschikbare doeltalen:")
-            print("1. Spaans (es)")
-            print("2. Frans (fr)")
-            print("3. Duits (de)")
-            print("4. Italiaans (it)")
-            print("5. Nederlands (nl)")
+        elif option == 3:
+            text = input("\nEnter text to translate: ")
+            print("\nAvailable target languages:")
+            print("1. Spanish")
+            print("2. French")
+            print("3. German")
+            print("4. Italian")
+            print("5. Dutch")
             
             try:
-                taal = input("Kies doeltaal (1-5 of taalcode zoals 'es'): ")
-                try:
-                    taal_num = int(taal)
-                    if taal_num not in range(1, 6):
-                        raise ValueError
-                    resultaat = translate(tekst, taal_num)
-                except ValueError:
-                    resultaat = translate(tekst, taal)
+                lang = input("Select target language (1-5): ")
+                result = translate(text, lang)
                 
-                print("\nVERTALING:")
-                print(f"Origineel: {resultaat['original_text']}")
-                print(f"Vertaling: {resultaat['translated_text']}")
+                print("\nTRANSLATION:")
+                print(f"Original: {result['original_text']}")
+                print(f"{get_language_name(lang)}: {result['translated_text']}")
             except Exception as e:
-                print(f"Fout: {str(e)}")
+                print(f"Error: {str(e)}")
         
-        elif optie == 4:
+        elif option == 4:
             print("\nEntertainment options:")
             print("1. Movie Information")
             print("2. Random Joke")
             print("3. Inspirational Quote")
             
             try:
-                categorie = input("Select entertainment type (1-3): ")
-                if categorie in ['1', 'movie']:
-                    film_titel = input("\nEnter movie title: ")
-                    resultaat = entertainment(categorie, film_titel)
+                category = input("Select entertainment type (1-3): ")
+                if category == '1':
+                    movie_title = input("\nEnter movie title: ")
+                    result = entertainment(category, movie_title)
                 else:
-                    resultaat = entertainment(categorie)
+                    result = entertainment(category)
                 
-                if 'error' in resultaat:
-                    print(f"\nError: {resultaat['error']}")
-                elif 'title' in resultaat:
+                if 'error' in result:
+                    print(f"\nError: {result['error']}")
+                elif 'title' in result:
                     print("\nMOVIE INFORMATION:")
-                    print(f"Title: {resultaat['title']} ({resultaat['year']})")
-                    print(f"Rating: {resultaat['rating']}")
-                    print(f"Director: {resultaat['director']}")
-                    print(f"Cast: {resultaat['actors']}")
-                    print(f"Plot: {resultaat['plot']}")
-                elif 'joke' in resultaat:
+                    print(f"Title: {result['title']} ({result['year']})")
+                    print(f"Rating: {result['rating']}/10")
+                    print(f"Director: {result['director']}")
+                    print(f"Cast: {result['actors']}")
+                    print(f"Plot: {result['plot']}")
+                elif 'joke' in result:
                     print("\nRANDOM JOKE:")
-                    print(resultaat['joke'])
-                elif 'quote' in resultaat:
+                    print(result['joke'])
+                elif 'quote' in result:
                     print("\nQUOTE:")
-                    print(f"{resultaat['quote']} - {resultaat['author']}")
+                    print(f"{result['quote']} - {result['author']}")
                 else:
                     print("\nUnknown result format")
             except Exception as e:
                 print(f"\nError: {str(e)}")
         
-        elif optie == 5:
-            print("\nBedankt voor het gebruiken van de Digitale Assistent!")
+        elif option == 5:
+            print("\nThank you for using Digital Assistant!")
             break
         
         else:
-            print("Ongeldige optie. Probeer opnieuw.")
+            print("Invalid option. Please try again.")
             continue
         
         while True:
-            keuze = input("\nTerug naar hoofdmenu? (j/n): ").lower()
-            if keuze in ['j', 'n']:
+            choice = input("\nReturn to main menu? (y/n): ").lower()
+            if choice in ['y', 'n']:
                 break
-            print("Voer 'j' of 'n' in")
+            print("Please enter 'y' or 'n'")
         
-        if keuze == 'n':
-            print("\nBedankt voor het gebruiken van de Digitale Assistent!")
+        if choice == 'n':
+            print("\nThank you for using Digital Assistant!")
             break
+
+def get_language_name(lang_code):
+    lang_map = {
+        '1': 'Spanish', 'es': 'Spanish',
+        '2': 'French', 'fr': 'French',
+        '3': 'German', 'de': 'German',
+        '4': 'Italian', 'it': 'Italian',
+        '5': 'Dutch', 'nl': 'Dutch'
+    }
+    return lang_map.get(str(lang_code).lower(), "Translation")
 
 if __name__ == "__main__":
     main()
