@@ -1,4 +1,4 @@
-import requests 
+import requests
 import json
 import re
 import time
@@ -6,31 +6,18 @@ import time
 RAPIDAPI_KEY = "a69cdae89amshdb1eb1b1b44f30bp1f4e96jsn8f47560ad780"
 OMDB_API_KEY = "5fc50607"
 
-API_CONFIG = {
-    'weather': {
-        'host': "open-weather13.p.rapidapi.com",
-        'base_url': "https://open-weather13.p.rapidapi.com/city"
-    },
-    'translate': {
-        'host': "deep-translate1.p.rapidapi.com",
-        'base_url': "https://deep-translate1.p.rapidapi.com/language/translate/v2"
-    }
-}
-
-def get_headers(service_name):
-    return {
-        "X-RapidAPI-Key": RAPIDAPI_KEY,
-        "X-RapidAPI-Host": API_CONFIG[service_name]['host']
-    }
-
 def weather(location):
     try:
-        service = 'weather'
-        url = f"{API_CONFIG[service]['base_url']}/{location}"
-        response = requests.get(url, headers=get_headers(service))
+        url = f"https://open-weather13.p.rapidapi.com/city/{location}"
+        headers = {
+            "X-RapidAPI-Key": RAPIDAPI_KEY,
+            "X-RapidAPI-Host": "open-weather13.p.rapidapi.com"
+        }
+        
+        response = requests.get(url, headers=headers)
         
         if response.status_code == 429:
-            print(f"Error fetching weather data: {response.status_code} Client Error: Too Many Requests for url: {url}/EN")
+            print(f"Error: Too many requests. Please try again later.")
             return None
         elif response.status_code != 200:
             print(f"Error fetching weather data: HTTP {response.status_code}")
@@ -51,17 +38,6 @@ def weather(location):
         return None
 
 def translate(text, target_language):
-    mock_translations = {
-        ('Hello, how are you today?', 'es'): 'Hola, ¿cómo estás hoy?',
-        ('Hello, how are you today?', '1'): 'Hola, ¿cómo estás hoy?',
-        ('Scripting is the best course at Thomas More', 'fr'): 'Le scripting est le meilleur cours chez Thomas More',
-        ('Scripting is the best course at Thomas More', '2'): 'Le scripting est le meilleur cours chez Thomas More',
-        ('Tonight I will be cooking pasta to feed my children.', 'de'): 'Heute Abend werde ich Nudeln kochen, um meine Kinder zu ernähren.',
-        ('Tonight I will be cooking pasta to feed my children.', '3'): 'Heute Abend werde ich Nudeln kochen, um meine Kinder zu ernähren.',
-        ('I have never read this many books in my whole life', 'nl'): 'Ik heb nog nooit zoveel boeken in mijn hele leven gelezen',
-        ('I have never read this many books in my whole life', '5'): 'Ik heb nog nooit zoveel boeken in mijn hele leven gelezen'
-    }
-    
     try:
         lang_map = {
             '1': 'es', 'es': 'es',
@@ -80,53 +56,69 @@ def translate(text, target_language):
         
         lang_code = lang_map[lang_key]
         
-        mock_key = (text, lang_key)
-        if mock_key in mock_translations:
-            return {
-                'original_text': text,
-                'translated_text': mock_translations[mock_key]
-            }
+        url = "https://deep-translate1.p.rapidapi.com/language/translate/v2"
         
-        service = 'translate'
-        payload = {"q": text, "source": "en", "target": lang_code}
-        response = requests.post(
-            API_CONFIG[service]['base_url'],
-            json=payload,
-            headers=get_headers(service)
-        )
-        data = response.json()
-        
-        if response.status_code != 200:
-            return {
-                'original_text': text,
-                'translated_text': f"API error: {response.status_code}"
-            }
-        
-        if 'data' not in data or 'translations' not in data['data']:
-            return {
-                'original_text': text,
-                'translated_text': 'Invalid API response'
-            }
-        
-        return {
-            'original_text': text,
-            'translated_text': data['data']['translations']['translatedText']
+        payload = {
+            "q": text,
+            "source": "en",
+            "target": lang_code
         }
         
+        headers = {
+            "content-type": "application/json",
+            "X-RapidAPI-Key": RAPIDAPI_KEY,
+            "X-RapidAPI-Host": "deep-translate1.p.rapidapi.com"
+        }
+        
+        response = requests.post(url, json=payload, headers=headers, timeout=5)
+        
+        if response.status_code == 200:
+            data = response.json()
+            translated_text = data.get('data', {}).get('translations', [])
+            
+            if isinstance(translated_text, list) and len(translated_text) > 0:
+                translated_text = translated_text[0].get('translatedText', 'No translation found')
+            elif isinstance(translated_text, dict):
+                translated_text = translated_text.get('translatedText', 'No translation found')
+            else:
+                translated_text = 'No translation found'
+            
+            if isinstance(translated_text, list):
+                translated_text = translated_text[0] if len(translated_text) > 0 else 'No translation found'
+            
+            return {
+                'original_text': text,
+                'translated_text': translated_text
+            }
+            
+        elif response.status_code == 403:
+            return {
+                'original_text': text,
+                'translated_text': 'API access denied (invalid key or quota exceeded)'
+            }
+        elif response.status_code == 429:
+            return {
+                'original_text': text,
+                'translated_text': 'Too many requests. Please try again later.'
+            }
+        else:
+            return {
+                'original_text': text,
+                'translated_text': f'Translation error (HTTP {response.status_code})'
+            }
+        
+    except requests.exceptions.RequestException as e:
+        return {
+            'original_text': text,
+            'translated_text': 'Translation service unavailable. Please try again later.'
+        }
     except Exception as e:
         return {
             'original_text': text,
-            'translated_text': f"Translation error: {str(e)}"
+            'translated_text': f'Translation error: {str(e)}'
         }
 
 def knowledge(query):
-    mock_responses = {
-        "Capybara": "The capybara or greater capybara (Hydrochoerus hydrochaeris) is the largest living rodent, native to South America. It is a member of the genus Hydrochoerus. The only other extant member is the lesser capybara (Hydrochoerus isthmius). Its close relatives include guinea pigs and rock cavies, and it is more distantly related to the agouti, the chinchilla, and the nutria. The capybara inhabits savannas and dense forests, and lives near bodies of water. It is a highly social species and can be found in groups as large as 100 individuals, but usually live in groups of 10–20 individuals. The capybara is hunted for its meat and hide and also for grease from its thick fatty skin."
-    }
-    
-    if query in mock_responses:
-        return {'summary': mock_responses[query]}
-    
     try:
         url = f"https://en.wikipedia.org/w/api.php?action=query&format=json&prop=extracts&exintro=1&explaintext=1&redirects=1&titles={query}"
         response = requests.get(url)
@@ -147,10 +139,6 @@ def knowledge(query):
         return {'summary': f"Error fetching knowledge: {str(e)}"}
 
 def entertainment(category, movie_title=None):
-    mock_quotes = {
-        "3": {"quote": "A short saying often contains much wisdom.", "author": "Sophocles"}
-    }
-    
     try:
         category = str(category).lower()
         
@@ -190,9 +178,6 @@ def entertainment(category, movie_title=None):
                 return {'error': f"Joke API error: {str(e)}"}
 
         elif category in ['3', 'quote']:
-            if category in mock_quotes:
-                return mock_quotes[category]
-                
             try:
                 response = requests.get("https://api.quotable.io/random", timeout=5)
                 data = response.json()
@@ -201,18 +186,24 @@ def entertainment(category, movie_title=None):
                     'author': data.get('author', 'Unknown')
                 }
             except requests.exceptions.RequestException as e:
-                return {
-                    'quote': 'A short saying often contains much wisdom.',
-                    'author': 'Sophocles'
-                }
+                return {'error': f"Quote API error: {str(e)}"}
         else:
             return {'error': 'Invalid entertainment category'}
 
     except Exception as e:
         return {'error': f"Unexpected error: {str(e)}"}
 
+def get_language_name(lang_code):
+    lang_map = {
+        '1': 'Spanish', 'es': 'Spanish',
+        '2': 'French', 'fr': 'French',
+        '3': 'German', 'de': 'German',
+        '4': 'Italian', 'it': 'Italian',
+        '5': 'Dutch', 'nl': 'Dutch'
+    }
+    return lang_map.get(str(lang_code).lower(), "Translation")
+
 def main():
-    """Main function to run the digital assistant."""
     print("\nDIGITAL ASSISTANT")
     print("-----------------")
     
@@ -320,16 +311,6 @@ def main():
         if choice == 'n':
             print("\nThank you for using Digital Assistant!")
             break
-
-def get_language_name(lang_code):
-    lang_map = {
-        '1': 'Spanish', 'es': 'Spanish',
-        '2': 'French', 'fr': 'French',
-        '3': 'German', 'de': 'German',
-        '4': 'Italian', 'it': 'Italian',
-        '5': 'Dutch', 'nl': 'Dutch'
-    }
-    return lang_map.get(str(lang_code).lower(), "Translation")
 
 if __name__ == "__main__":
     main()
