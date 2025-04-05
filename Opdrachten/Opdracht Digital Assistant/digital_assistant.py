@@ -8,7 +8,7 @@ OMDB_API_KEY = "5fc50607"
 
 def weather(location):
     try:
-        url = f"https://open-weather13.p.rapidapi.com/city/{location}"
+        url = f"https://open-weather13.p.rapidapi.com/city/{location}/EN"
         headers = {
             "X-RapidAPI-Key": RAPIDAPI_KEY,
             "X-RapidAPI-Host": "open-weather13.p.rapidapi.com"
@@ -17,7 +17,7 @@ def weather(location):
         response = requests.get(url, headers=headers)
         
         if response.status_code == 429:
-            print(f"Error: Too many requests. Please try again later.")
+            print("Error: Too many requests. Please try again later.")
             return None
         elif response.status_code != 200:
             print(f"Error fetching weather data: HTTP {response.status_code}")
@@ -26,12 +26,11 @@ def weather(location):
         data = response.json()
         
         return {
-            'location': f"{data.get('name', location)}, {data.get('sys', {}).get('country', '')}",
-            'temperature': data['main']['temp'],
-            'feels_like': data['main']['feels_like'],
+            'temperature': f"{data['main']['temp']:.1f}°C",
+            'feels_like': f"{data['main']['feels_like']:.1f}°C",
             'conditions': data['weather'][0]['description'].title(),
-            'humidity': data['main']['humidity'],
-            'wind': round(data['wind']['speed'] * 3.6)
+            'humidity': f"{data['main']['humidity']}%",
+            'wind': f"{round(data['wind']['speed'] * 3.6)} km/h"
         }
     except Exception as e:
         print(f"Error fetching weather data: {str(e)}")
