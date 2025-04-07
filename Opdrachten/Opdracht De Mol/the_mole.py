@@ -54,24 +54,54 @@ def get_news(year, location):
     return "\n".join(titles)
 
 def get_info(year, mole):
-    url = "https://www.wieisdemol.be/archief"
-    response = requests.get(url)
+    base_url = f"https://www.wieisdemol.be/archief/{year}/"
+    response = requests.get(base_url)
     soup = BeautifulSoup(response.content, "html.parser")
 
-    kandidaten = soup.find_all("div", class_="contestant-card")
+    profile_link = ""
+    kandidaten_blokken = soup.find_all("div", class_="col-sm-6")
+    for blok in kandidaten_blokken:
+        naam_tag = blok.find("b")
+        if naam_tag:
+            naam = naam_tag.text.strip().lower()
+            if mole.lower() == naam:
+                a_tag = blok.find("a", href=True)
+                if a_tag:
+                    profile_link = a_tag["href"]
+                    break
 
-    for kandidaat in kandidaten:
-        naam = kandidaat.find("div", class_="contestant-name").text.strip()
-        if naam.lower() == mole.lower():
-            details = kandidaat.find("div", class_="contestant-details").text.strip()
-            img_tag = kandidaat.find("img")
-            img_url = "https://www.wieisdemol.be" + img_tag["src"]
-            image_data = requests.get(img_url).content
-            with open(f"{mole.lower().replace(' ', '_')}.png", "wb") as f:
-                f.write(image_data)
-            return details
+    if not profile_link:
+        return "Mol niet gevonden."
 
-    return "Mole not found."
+    if not profile_link.startswith("http"):
+        profile_link = "https://www.wieisdemol.be" + profile_link
+
+    profile_response = requests.get(profile_link)
+    profile_soup = BeautifulSoup(profile_response.content, "html.parser")
+    info_text = "Geen info gevonden."
+
+    top10_row = profile_soup.find("div", class_="row top10")
+    if top10_row:
+        right_div = top10_row.find("div", class_="col-sm-8")
+        if right_div:
+            eigenschappen = right_div.find_all("p", class_="eigenschap")
+            info_text = "\n".join(p.get_text(strip=True) for p in eigenschappen)
+
+    img_tag = profile_soup.find("img", class_="img-responsive kandidaatimg")
+    if img_tag and "src" in img_tag.attrs:
+        img_url = img_tag["src"]
+        if not img_url.startswith("http"):
+            img_url = "https://www.wieisdemol.be" + img_url.replace("..", "")
+        img_data = requests.get(img_url).content
+        filename = mole.lower().replace(' ', '_') + ".png"
+        with open(filename, "wb") as f:
+            f.write(img_data)
+        info_text+=f"\nImage saved as {filename}"
+
+    info_text = info_text.replace("Leeftijd:", "Leeftijd: ")
+    info_text = info_text.replace("Woonplaats:", "Woonplaats: ")
+
+    return info_text
 
 def find_excel_buttons(driver):
     return [b for b in driver.find_elements(By.TAG_NAME, "button") if "Excel" in b.text]
@@ -131,8 +161,8 @@ def main():
     mole, winner, location = get_season(year)
     print(f"\nThe Mole: {mole}\nWinner: {winner}\nLocation: {location}\n")
 
-    translated = hello("Best friends...", location)
-    print(translated, "\n")
+    # translated = hello("Best friends...", location)
+    # print(translated, "\n")
 
     print("News articles:")
     news = get_news(year, location)
