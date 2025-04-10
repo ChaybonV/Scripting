@@ -125,12 +125,7 @@ def get_info(year, mole):
 #    print("")
 
 def main():
-    sentence = "Best friends..."
-    filming_location = input("Voer de filmlocatie in (bijvoorbeeld 'France'): ").strip()
-
-    result = hello(sentence, filming_location)
-    if result:
-        print(f"Vertaalde zin: {result}")
+    print("")
 
 if __name__ == "__main__":
     main()
