@@ -1,10 +1,13 @@
 import requests
 from bs4 import BeautifulSoup
-import pandas as pd
-from selenium import webdriver
 import time
 import os
 import json
+import pandas as pd
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.firefox.options import Options
+
 
 def get_season(year):
     url = "https://en.wikipedia.org/wiki/De_Mol_(TV_series)"
@@ -121,11 +124,29 @@ def get_info(year, mole):
 
     return info_text
 
-#def get_statistics(year):
-#    print("")
+# def get_statistics(year):
+#     print("")
 
 def main():
-    print("")
+    year = input()
+
+    mole, winner, location = get_season(year)
+    if not mole or not winner or not location:
+        print("Geen gegevens gevonden voor dat jaar.")
+        return
+
+    print(f"The Mole: {mole}")
+    print(f"Winner: {winner}")
+    print(f"Location: {location}\n")
+
+    translated = hello("Best friends...", location)
+    print(translated.strip() + "\n")
+
+    news = get_news(year, location)
+    print(news + "\n")
+
+    mol_info = get_info(year, mole)
+    print(mol_info)
 
 if __name__ == "__main__":
     main()
