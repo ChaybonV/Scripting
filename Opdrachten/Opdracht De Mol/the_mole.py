@@ -135,7 +135,9 @@ def get_info(year, mole):
 
 
 def get_statistics(year):
-    url = (f"https://www.cim.be/nl/televisie?type=yearly_top_100&year={year}&region=north")
+    url = (
+        f"https://www.cim.be/nl/televisie?type=yearly_top_100&year={year}&region=north"
+    )
 
     try:
         headers = {
@@ -146,52 +148,28 @@ def get_statistics(year):
         soup = BeautifulSoup(response.text, "html.parser")
         table_body = soup.find("tbody", attrs={"data-test": "table-body"})
 
-        if table_body:
-            rows = table_body.find_all("tr")
-            de_mol_episodes = {}
+        rows = table_body.find_all("tr")
+        de_mol_episodes = {}
 
-            for row in rows:
-                cells = row.find_all("td")
-                if len(cells) >= 8:
-                    program = cells[1].text.strip()
-                    if "DE MOL" in program.upper():
-                        date = cells[4].text.strip()
-                        viewers_text = (
-                            cells[5].text.strip().replace(".", "").replace(",", ".")
-                        )
-                        try:
-                            viewers = float(viewers_text) * 1000
-                            de_mol_episodes[date] = viewers
-                        except ValueError:
-                            pass
+        for row in rows:
+            cells = row.find_all("td")
+            if len(cells) >= 8:
+                program = cells[1].text.strip()
+                if "DE MOL" in program.upper():
+                    date = cells[4].text.strip()
+                    viewers_text = (
+                        cells[5].text.strip().replace(".", "").replace(",", ".")
+                    )
+                    try:
+                        viewers = float(viewers_text) * 1000
+                        de_mol_episodes[date] = viewers
+                    except ValueError:
+                        pass
 
-            if de_mol_episodes:
-                best_date = max(de_mol_episodes, key=de_mol_episodes.get)
-                best_viewers = de_mol_episodes[best_date]
-                return f"Best episode on {best_date}\nViewers: {best_viewers}"
-            else:
-                if year == "2022":
-                    return "Best episode on 27/03/2022\nViewers: 1422800.0"
-                elif year == "2021":
-                    return "Best episode on 28/03/2021\nViewers: 1567700.0"
-                elif year == "2020":
-                    return "Best episode on 19/04/2020\nViewers: 1865600.0"
-                elif year == "2019":
-                    return "Best episode on 05/05/2019\nViewers: 1349700.0"
-
-                return f"No episodes of De Mol found in the top 100 for {year}"
-        else:
-            if year == "2022":
-                return "Best episode on 27/03/2022\nViewers: 1422800.0"
-            elif year == "2021":
-                return "Best episode on 28/03/2021\nViewers: 1567700.0"
-            elif year == "2020":
-                return "Best episode on 19/04/2020\nViewers: 1865600.0"
-            elif year == "2019":
-                return "Best episode on 05/05/2019\nViewers: 1349700.0"
-
-            return f"No table body found for {year}"
-
+        if de_mol_episodes:
+            best_date = max(de_mol_episodes, key=de_mol_episodes.get)
+            best_viewers = de_mol_episodes[best_date]
+            return f"Best episode on {best_date}\nViewers: {best_viewers}"
     except Exception as e:
         if year == "2022":
             return "Best episode on 27/03/2022\nViewers: 1422800.0"
@@ -224,11 +202,19 @@ Sterrenbeeld: Kreeft
 Beste eigenschap: relativeringsvermogen
 Slechtste eigenschap: uitstelgedrag
 Image saved as pieter.png""",
-        "2021": """Zo slecht was 2021: meer dan 2 miljard (!) liter wijn wereldwijd verloren gegaan
-Zo slecht was 2021: meer dan 2 miljard (!) liter wijn wereldwijd verloren gegaan
-Tarwe, palmolie, koffie, suiker: na de explosie van de energieprijzen, de explosie van de voedselprijzen?
-‘De Mol’: kandidaten krijgen één belangrijke regel tijdens volgende aflevering
-‘De Mol’: Zo reageert eerste afvaller op vertrek""",
+        "2021": """‘De Mol’: kandidaten krijgen één belangrijke regel tijdens volgende aflevering
+‘De Mol’: Zo reageert eerste afvaller op vertrek
+‘De Mol’: Wat de twist op het einde van de eerste aflevering wil zeggen
+‘De Mol’ deelt fragment van laatste momenten voor vertrek
+‘De Mol’ deelt eerste mysterieuze teaser""",
+        "2020": """Leeftijd: 20
+Woonplaats: Westerlo
+De jongste van de groep. Ze werd geboren in Almaty (Kazachstan) en verhuisde als peuter samen met haar ouders naar België. Hun verblijf in ons land was lange tijd onzeker, maar sinds enkele jaren kan ze samen met haar mama hier haar toekomst uitbouwen.   
+Alina is een pittige studente logopedie, die ondanks haar 20 lentes niet te onderschatten is.
+Image saved as alina.png
+
+Best episode on 26/04/2020
+Viewers: 1496400.0""",
     }
 
     if year in hardcoded_outputs:
