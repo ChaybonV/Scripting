@@ -31,11 +31,50 @@ def daily_tarot(date):
 
     return {'card_name': card_name,'card_description': card_description}
 
-# def moon_phase(date):
-#     print()
+def moon_phase(date):
+    if isinstance(date, str):
+        date = parser.parse(date)
 
-# def solar_data(date, location):
-#     print()
+    timestamp = int(date.timestamp())
+    url = f"https://api.farmsense.net/v1/moonphases/?d={timestamp}"
+    response = requests.get(url)
+    data = response.json()
+
+    phase = data[0]["Phase"]
+    illumination = round(data[0]["Illumination"] * 100)
+    return {'phase': phase,'illumination': f"{illumination}%"}
+
+def solar_data(date, location):
+    if isinstance(date, str):
+        date = parser.parse(date)
+    
+    formatted_date = date.strftime('%Y-%m-%d')
+    nominatim_url = f"https://nominatim.openstreetmap.org/search?q={location}&format=json&limit=1"
+    headers = {'User-Agent': 'Mozilla/5.0'}
+    response = requests.get(nominatim_url, headers=headers)
+    data = response.json()
+        
+    lat = data[0]["lat"]
+    lng = data[0]["lon"]
+
+    solar_url = f"https://api.sunrise-sunset.org/json?lat={lat}&lng={lng}&date={formatted_date}&formatted=1"
+    solar_response = requests.get(solar_url)
+    solar_data = solar_response.json()
+    results = solar_data["results"]
+
+    sunrise_time_obj = datetime.strptime(results['sunrise'], '%I:%M:%S %p')
+    sunrise = sunrise_time_obj.strftime('%I:%M %p')
+
+    sunset_time_obj = datetime.strptime(results['sunset'], '%I:%M:%S %p')
+    sunset = sunset_time_obj.strftime('%I:%M %p')
+
+    solar_noon_time_obj = datetime.strptime(results['solar_noon'], '%I:%M:%S %p')
+    solar_noon = solar_noon_time_obj.strftime('%I:%M %p')
+
+    h, m, s = map(int, results["day_length"].split(':'))
+    day_length = f"{h} hours {m} minutes"
+
+    return {'sunrise': sunrise,'sunset': sunset,'day_length': day_length,'solar_noon': solar_noon}
 
 def upcoming_events(date):
     if isinstance(date, str):
