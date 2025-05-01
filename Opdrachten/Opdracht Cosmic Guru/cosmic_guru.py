@@ -165,30 +165,37 @@ def run_multi_threaded(date, location):
 def write_to_file(date, results):
     formatted_date = date.strftime('%Y-%m-%d')
     filename = f"cosmic_data_{formatted_date}.txt"
-    
+    output_lines = []
+
+    output_lines.append(date.strftime('%d/%m/%Y'))
+    output_lines.append(results['solar'].get('location', ''))
+    output_lines.append("multi" if results.get("multi_threaded") else "single")
+    output_lines.append("")
+
+    output_lines.append(f"Card name: {results['tarot']['card_name']}")
+    output_lines.append(f"Card description: {results['tarot']['card_description']}")
+    output_lines.append("")
+
+    output_lines.append(f"Moon Phase: {results['moon']['phase']} ({results['moon']['illumination']} illuminated)")
+    output_lines.append("")
+
+    output_lines.append(f"Sunrise: {results['solar']['sunrise']}")
+    output_lines.append(f"Sunset: {results['solar']['sunset']}")
+    output_lines.append(f"Day Length: {results['solar']['day_length']}")
+    output_lines.append(f"Solar Noon: {results['solar']['solar_noon']}")
+    output_lines.append("")
+
+    output_lines.append(f"Astronomical Events for {date.year}:")
+    for event in results['events']:
+        output_lines.append(f"- {event['date']}: {event['description']}")
+
     with open(filename, 'w') as f:
-        f.write(f"COSMIC GURU DATA FOR {date.strftime('%B %d, %Y')}\n")
-        f.write("="*50 + "\n\n")
-        
-        f.write("DAILY TAROT CARD:\n")
-        f.write(f"Card: {results['tarot']['card_name']}\n")
-        f.write(f"Description: {results['tarot']['card_description']}\n\n")
-        
-        f.write("MOON PHASE:\n")
-        f.write(f"Phase: {results['moon']['phase']}\n")
-        f.write(f"Illumination: {results['moon']['illumination']}\n\n")
-        
-        f.write("SOLAR DATA:\n")
-        f.write(f"Sunrise: {results['solar']['sunrise']}\n")
-        f.write(f"Sunset: {results['solar']['sunset']}\n")
-        f.write(f"Day Length: {results['solar']['day_length']}\n")
-        f.write(f"Solar Noon: {results['solar']['solar_noon']}\n\n")
-        
-        f.write("UPCOMING ASTRONOMICAL EVENTS:\n")
-        for event in results['events']:
-            f.write(f"{event['date']}: {event['description']}\n")
-    
-    print(f"Data successfully written to {filename}")
+        for line in output_lines:
+            print(line)
+            f.write(line + "\n")
+
+    print("\nSingle-threaded operation complete!" if not results.get("multi_threaded") else "Multi-threaded operation complete!")
+    print(f"\nAll data saved to {filename}")
 
 def main():
     date, location, multi_threaded = get_user_input()
@@ -200,7 +207,11 @@ def main():
         print("Running in single-threaded mode...")
         results = run_single_threaded(date, location)
     
+    results['solar']['location'] = location
+    results['multi_threaded'] = multi_threaded
+
     write_to_file(date, results)
+
 
 if __name__ == "__main__":
     main()
