@@ -201,10 +201,8 @@ def main():
     date, location, multi_threaded = get_user_input()
     
     if multi_threaded:
-        print("Running in multi-threaded mode...")
         results = run_multi_threaded(date, location)
     else:
-        print("Running in single-threaded mode...")
         results = run_single_threaded(date, location)
     
     results['solar']['location'] = location
