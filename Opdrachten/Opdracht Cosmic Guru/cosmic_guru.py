@@ -130,6 +130,9 @@ def upcoming_events(date):
             original_text = re.sub(r"(?<!\s)\|(?!\s)", " | ", original_text)
             original_text = re.sub(r"Asteroid 2009 UN3 Close Approach\.\s*(?=\w)", "Asteroid 2009 UN3 Close Approach.", original_text)
             original_text = re.sub(r"(events to celebrate and share the wonder of astronomy\.)", r"\1 ", original_text)
+            original_text = re.sub(r"(?=and the Astronomical League.)", " ", original_text)
+            original_text = re.sub(r"(?=click here.)", " ", original_text)
+            original_text = re.sub(r"(?=AstronomyDay.org and the Astronomical League.)", " ", original_text)
 
             description = f"{date_text} - {title_text}"
 
