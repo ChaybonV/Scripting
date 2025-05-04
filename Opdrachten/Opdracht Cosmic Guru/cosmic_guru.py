@@ -121,15 +121,15 @@ def upcoming_events(date):
 
             original_text = p_tag.get_text(strip=True)
 
-            original_text = re.sub(r"(?<=visible throughout all North America, Mexico, Central America, and South America\.)\s*(?=\(NASA Map and Eclipse Information\))", "\r\n        ", original_text)
-            original_text = re.sub(r"(?<=parts of southern South America and southwestern Afric\.)\s*(?=\(NASA Map and Eclipse Information\))", "\r\n        ", original_text)
-            original_text = re.sub(r"(?<=A partial eclipse will be visible throughout parts of southern South America and southwestern Africa\.)\s*(?=\(NASA Map and Eclipse Information\))", "\n        ", original_text)
+            original_text = re.sub(r"(?<=visible throughout all North America, Mexico, Central America, and South America\.)\s*(?=\(NASA Map and Eclipse Information\))","\r\n        ",original_text,)
+            original_text = re.sub(r"(?<=parts of southern South America and southwestern Afric\.)\s*(?=\(NASA Map and Eclipse Information\))","\r\n        ",original_text,)
+            original_text = re.sub(r"(?<=A partial eclipse will be visible throughout parts of southern South America and southwestern Africa\.)\s*(?=\(NASA Map and Eclipse Information\))","\n        ",original_text)
             original_text = re.sub(r"(?=rare, once-in-a-lifetime event)", " ", original_text)
-            original_text = re.sub(r"(?=for viewers in the United States\. The last total solar)", " ", original_text)
+            original_text = re.sub(r"(?=for viewers in the United States\. The last total solar)"," ",original_text)
             original_text = re.sub(r"(?=Astronomical League.)", " ", original_text)
             original_text = re.sub(r"(?<!\s)\|(?!\s)", " | ", original_text)
-            original_text = re.sub(r"Asteroid 2009 UN3 Close Approach\.\s*(?=\w)", "Asteroid 2009 UN3 Close Approach.", original_text)
-            original_text = re.sub(r"(events to celebrate and share the wonder of astronomy\.)", r"\1 ", original_text)
+            original_text = re.sub(r"Asteroid 2009 UN3 Close Approach\.\s*(?=\w)","Asteroid 2009 UN3 Close Approach.",original_text)
+            original_text = re.sub(r"(events to celebrate and share the wonder of astronomy\.)",r"\1 ",original_text)
             original_text = re.sub(r"(?=and the Astronomical League.)", " ", original_text)
             original_text = re.sub(r"(?=click here.)", " ", original_text)
             original_text = re.sub(r"(?=AstronomyDay.org and the Astronomical League.)", " ", original_text)
@@ -211,9 +211,7 @@ def write_to_file(date, results):
     output_lines.append(f"Card description: {results['tarot']['card_description']}")
     output_lines.append("")
 
-    output_lines.append(
-        f"Moon Phase: {results['moon']['phase']} ({results['moon']['illumination']} illuminated)"
-    )
+    output_lines.append(f"Moon Phase: {results['moon']['phase']} ({results['moon']['illumination']} illuminated)")
     output_lines.append("")
 
     output_lines.append(f"Sunrise: {results['solar']['sunrise']}")
@@ -231,11 +229,7 @@ def write_to_file(date, results):
             print(line)
             f.write(line + "\n")
 
-    print(
-        "\nSingle-threaded operation complete!"
-        if not results.get("multi_threaded")
-        else "Multi-threaded operation complete!"
-    )
+    print("\nSingle-threaded operation complete!" if not results.get("multi_threaded") else "Multi-threaded operation complete!")
     print(f"\nAll data saved to {filename}")
 
 
