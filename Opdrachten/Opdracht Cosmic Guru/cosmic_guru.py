@@ -18,7 +18,7 @@ def daily_tarot(date):
 
     script = soup.find("script", type="application/ld+json")
     if not script:
-        return "Could not find JSON data in the page."
+        return "Could not find JSON data on the page."
 
     json_data = json.loads(script.string)
     article_body = json_data.get("articleBody", "")
@@ -121,8 +121,8 @@ def upcoming_events(date):
 
             original_text = p_tag.get_text(strip=True)
 
-            original_text = re.sub(r"(?<=visible throughout all North America, Mexico, Central America, and South America\.)\s*(?=\(NASA Map and Eclipse Information\))","\r\n        ",original_text,)
-            original_text = re.sub(r"(?<=parts of southern South America and southwestern Afric\.)\s*(?=\(NASA Map and Eclipse Information\))","\r\n        ",original_text,)
+            original_text = re.sub(r"(?<=visible throughout all North America, Mexico, Central America, and South America\.)\s*(?=\(NASA Map and Eclipse Information\))","\r\n        ",original_text)
+            original_text = re.sub(r"(?<=parts of southern South America and southwestern Afric\.)\s*(?=\(NASA Map and Eclipse Information\))","\r\n        ",original_text)
             original_text = re.sub(r"(?<=A partial eclipse will be visible throughout parts of southern South America and southwestern Africa\.)\s*(?=\(NASA Map and Eclipse Information\))","\n        ",original_text)
             original_text = re.sub(r"(?=rare, once-in-a-lifetime event)", " ", original_text)
             original_text = re.sub(r"(?=for viewers in the United States\. The last total solar)"," ",original_text)
@@ -133,6 +133,8 @@ def upcoming_events(date):
             original_text = re.sub(r"(?=and the Astronomical League.)", " ", original_text)
             original_text = re.sub(r"(?=click here.)", " ", original_text)
             original_text = re.sub(r"(?=AstronomyDay.org and the Astronomical League.)", " ", original_text)
+            # De fouten dat nu in de testen zitten zijn niet op te lossen aangezien het probleem blijft
+            original_text = re.sub(r"(?=An annular solar eclipse occurs when the Moon is too far away from the Earth to completely cover the Sun. This results in a ring of light around the darkened Moon.)", " ", original_text)
 
             description = f"{date_text} - {title_text}"
 
