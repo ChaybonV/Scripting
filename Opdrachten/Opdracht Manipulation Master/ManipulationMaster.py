@@ -5,8 +5,6 @@ import cv2
 from PIL import Image
 from ultralytics import YOLO
 
-CLOUDMERSIVE_API_KEY = "0000382e-8774-4e20-877d-c30634050a4f"
-
 
 def downloadAndDetect():
     os.makedirs("Images", exist_ok=True)
@@ -48,33 +46,23 @@ def painting(filename):
         image_data = image_file.read()
 
     headers = {
-        "Apikey": CLOUDMERSIVE_API_KEY
+        "Apikey": "0000382e-8774-4e20-877d-c30634050a4f"
     }
 
     files = {
         "imageFile": (filename, image_data, "application/octet-stream")
     }
 
-    response = requests.post(
-        "https://api.cloudmersive.com/image/artistic/painting/wave",
-        headers=headers,
-        files=files
-    )
+    response = requests.post("https://api.cloudmersive.com/image/artistic/painting/wave",headers=headers,files=files)
 
-    if response.status_code == 200:
-        with open(save_as, "wb") as f:
-            f.write(response.content)
-        print(f"Image successfully saved as {save_as}")
-    else:
-        print(f"Cloudmersive API error: {response.status_code}")
+    with open(save_as, "wb") as f:
+        f.write(response.content)
+    print(f"Image successfully saved as {save_as}")
 
 
 def grayscale(filename):
     filepath = os.path.join("Images", filename)
     img = cv2.imread(filepath)
-    if img is None:
-        print(f"Image not found: {filepath}")
-        return
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     save_as = filepath.replace(".jpg", "_gray.jpg")
     cv2.imwrite(save_as, gray)
@@ -84,9 +72,6 @@ def grayscale(filename):
 def blur(filename):
     filepath = os.path.join("Images", filename)
     img = cv2.imread(filepath)
-    if img is None:
-        print(f"Image not found: {filepath}")
-        return
     blurred = cv2.GaussianBlur(img, (15, 15), 0)
     save_as = filepath.replace(".jpg", "_blurred.jpg")
     cv2.imwrite(save_as, blurred)
