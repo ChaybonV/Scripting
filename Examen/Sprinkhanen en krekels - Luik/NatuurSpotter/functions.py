@@ -3,7 +3,6 @@ from bs4 import BeautifulSoup
 import re
 
 def soort_info(soort):
-    # Stap 1: Zoek de soort-ID op via zoekpagina
     zoek_url = f"https://waarnemingen.be/species/search/?q={soort.replace(' ', '%20')}"
     zoek_response = requests.get(zoek_url)
     zoek_soup = BeautifulSoup(zoek_response.content, 'html.parser')
@@ -20,7 +19,6 @@ def soort_info(soort):
                     soort_id = match.group(1)
                     break
 
-    # Stap 2: Detailpagina van soort
     url_info = f"https://waarnemingen.be/species/{soort_id}/"
     response_info = requests.get(url_info)
     soup_info = BeautifulSoup(response_info.content, 'html.parser')
@@ -48,14 +46,20 @@ def soort_info(soort):
     response_stats = requests.get(url_stats)
     soup_stats = BeautifulSoup(response_stats.content, 'html.parser')
 
-    status = "Onbekend"
-    status_div = soup_stats.find("div", class_="text-muted")
-    if status_div:
-        status = status_div.text.strip()
-
     print(f"\n{soort}\n")
     print(f"[Afbeelding]: {afbeelding_url}")
     print(f"Latijnse naam: {latijnse_naam}")
-    print(f"Zeldzaamheidstatus: {status}")
+    #print(f"Zeldzaamheidstatus: {status}")
     print("\nBeschrijving:\n")
     print(beschrijving)
+
+
+
+def observaties_kaart(dag=None):
+    print()
+
+def seizoensanalyse(soort, jaar):
+    print()
+
+def biodiversiteit_analyse(maand=None, jaar=None):
+    print()
