@@ -72,18 +72,17 @@ def soort_info(soort):
                 locatie = kolommen[2].text.strip()
                 observaties.append((datum, aantal, locatie))
 
-    print(f"\nInfo over '{soort}':")
-    print(f"Latijnse naam: {latijnse_naam}")
-    print(f"Zeldzaamheidsstatus: {status}")
-    print(f"Beschrijving:\n{beschrijving}")
+    print(f"\n{soort}")
     print(f"Afbeelding: {afbeelding_url}\n")
+    print(f"\n\nLatijnse naam: {latijnse_naam}")
+    print(f"Zeldzaamheidsstatus: {status}")
+    print(f"\n\n{beschrijving}")
 
-    print(f"10 recentste waarnemingen in provincie Luik (tussen {vorig_jaar} en {vandaag}):")
     if not observaties:
         print("Geen waarnemingen gevonden.")
     else:
         for datum, aantal, locatie in observaties:
-            print(f"{datum} - {aantal} - {locatie}")
+            print(f"\n\n{datum} - {aantal} - {locatie}")
 
 # def observaties_kaart(dag=None):
 #     print()
