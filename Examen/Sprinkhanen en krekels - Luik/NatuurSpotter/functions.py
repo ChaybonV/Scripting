@@ -1,72 +1,89 @@
 import requests
 from bs4 import BeautifulSoup
-import re
+from datetime import date
 
 def soort_info(soort):
-    headers = {"User-Agent": "Mozilla/5.0"}
-
-    zoek_url = f"https://waarnemingen.be/search/species?q={soort.replace(' ', '%20')}"
-    zoek_response = requests.get(zoek_url, headers=headers)
-    zoek_soup = BeautifulSoup(zoek_response.text, "html.parser")
-
-    soort_link = zoek_soup.find("a", href=lambda x: x and x.startswith("/species/"))
-    soort_id = soort_link["href"].split("/")[2]
-
-    detail_url = f"https://waarnemingen.be/species/{soort_id}/"
-    detail_response = requests.get(detail_url, headers=headers)
-    detail_soup = BeautifulSoup(detail_response.text, "html.parser")
-
-    juiste_groep = None
-    for a_tag in detail_soup.find_all("a", class_="btn btn-default btn-outline-secondary"):
-        tekst = ' '.join(a_tag.text.split()).lower()
-        if "sprinkhanen en krekels" in tekst:
-            if a_tag.get("href") and "species_group=14" in a_tag["href"]:
-                juiste_groep = a_tag
-                break
-
-    if not juiste_groep:
-        print(f"⚠️ '{soort}' behoort niet tot de soortgroep 'Sprinkhanen en krekels'.")
+    zoek_url = f"https://waarnemingen.be/search/?q={soort.replace(' ', '+')}"
+    zoek_resp = requests.get(zoek_url)
+    if zoek_resp.status_code != 200:
+        print("Fout bij ophalen van zoekpagina.")
         return
 
-    print(f"✅ '{soort}' behoort tot de soortgroep 'Sprinkhanen en krekels'.")
+    zoek_soup = BeautifulSoup(zoek_resp.text, "html.parser")
+    lijstitem = zoek_soup.find("li", class_="lead")
+    if not lijstitem:
+        print("Soort niet gevonden.")
+        return
 
-    beschrijving = detail_soup.find("div", class_="description")
-    beschrijving = beschrijving.text.strip() if beschrijving else "Geen beschrijving beschikbaar."
+    a_tag = lijstitem.find("a", href=True)
+    if not a_tag or "/species/" not in a_tag["href"]:
+        print("Soortlink niet gevonden.")
+        return
 
-    latijn = detail_soup.find("h1")
-    latijn = latijn.find("em").text.strip() if latijn and latijn.find("em") else "Onbekend"
+    href = a_tag["href"]
+    soort_id = href.strip("/").split("/")[-1]
+    soort_url = f"https://waarnemingen.be{href}"
 
-    zeldzaam = detail_soup.find("span", class_="badge")
-    zeldzaam = zeldzaam.text.strip() if zeldzaam else "Onbekend"
+    resp = requests.get(soort_url)
+    if resp.status_code != 200:
+        print("Fout bij openen van soortpagina.")
+        return
 
-    afbeelding = detail_soup.find("figure")
-    afbeelding_url = afbeelding.find("img")["src"] if afbeelding and afbeelding.find("img") else "Geen afbeelding gevonden"
+    soup = BeautifulSoup(resp.text, "html.parser")
+
+    soortgroep_link = soup.find("a", href="/species/search/?species_group=14")
+    if not soortgroep_link:
+        print("❌ Deze soort behoort niet tot de soortgroep 'Sprinkhanen en krekels'.")
+        return
+
+    beschrijving_div = soup.find("div", class_="app-content-section js-user-content")
+    beschrijving = beschrijving_div.get_text().strip() if beschrijving_div else "Geen beschrijving gevonden."
+
+    latijn_tag = soup.find("i", class_="species-scientific-name")
+    latijnse_naam = latijn_tag.text.strip() if latijn_tag else "Onbekend"
+
+    status_span = soup.find("span", class_="hidden-sm")
+    status = status_span.text.strip() if status_span else "Niet vermeld"
+
+    afbeelding_tag = soup.find("figure", class_="app-ratio-box-4-3 lightbox-gallery")
+    img = afbeelding_tag.find("img") if afbeelding_tag else None
+    afbeelding_url = "https://waarnemingen.be" + img["src"] if img else "Geen afbeelding gevonden"
+
+    vandaag = date.today()
+    vorig_jaar = vandaag.replace(year=vandaag.year - 1)
+    obs_url = (f"https://waarnemingen.be/species/{soort_id}/observations/"f"?date_after={vorig_jaar}&date_before={vandaag}&country_division=22")
+    obs_resp = requests.get(obs_url)
+    if obs_resp.status_code != 200:
+        print("Fout bij ophalen van waarnemingen.")
+        return
+
+    obs_soup = BeautifulSoup(obs_resp.text, "html.parser")
+    tbody = obs_soup.find("tbody")
+    observaties = []
+
+    if tbody:
+        rijen = tbody.find_all("tr", class_=["even", "odd"])
+        for rij in rijen[:10]:
+            kolommen = rij.find_all("td")
+            if len(kolommen) >= 3:
+                datum = kolommen[0].text.strip()
+                aantal_raw = kolommen[1].get_text(separator=" ").strip()
+                aantal = aantal_raw.split()[0] if aantal_raw else "?"
+                locatie = kolommen[2].text.strip()
+                observaties.append((datum, aantal, locatie))
 
     print(f"\nInfo over '{soort}':")
-    print(f"- Latijnse naam: {latijn}")
-    print(f"- Zeldzaamheidsstatus: {zeldzaam}")
-    print(f"- Beschrijving: {beschrijving}")
-    print(f"- Afbeelding: {afbeelding_url}")
+    print(f"Latijnse naam: {latijnse_naam}")
+    print(f"Zeldzaamheidsstatus: {status}")
+    print(f"Beschrijving:\n{beschrijving}")
+    print(f"Afbeelding: {afbeelding_url}\n")
 
-    obs_url = f"https://waarnemingen.be/species/{soort_id}/observations/?date_after=2024-05-24&date_before=2025-05-24&country_division=22"
-    obs_response = requests.get(obs_url, headers=headers)
-    obs_soup = BeautifulSoup(obs_response.text, "html.parser")
-
-    print("\n📊 10 recentste waarnemingen in Luik:")
-    rijen = obs_soup.find_all("tr", class_="observation-line")
-    if not rijen:
+    print(f"10 recentste waarnemingen in provincie Luik (tussen {vorig_jaar} en {vandaag}):")
+    if not observaties:
         print("Geen waarnemingen gevonden.")
-        return
-
-    for i, rij in enumerate(rijen[:10], 1):
-        kolommen = rij.find_all("td")
-        if len(kolommen) >= 4:
-            datum = kolommen[0].text.strip()
-            plaats = kolommen[1].text.strip()
-            aantal = kolommen[2].text.strip()
-            waarnemer = kolommen[3].text.strip()
-            print(f"{i}. Datum: {datum} | Plaats: {plaats} | Aantal: {aantal} | Waarnemer: {waarnemer}")
-
+    else:
+        for datum, aantal, locatie in observaties:
+            print(f"{datum} - {aantal} - {locatie}")
 
 # def observaties_kaart(dag=None):
 #     print()
