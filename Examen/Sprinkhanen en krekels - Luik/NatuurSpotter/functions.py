@@ -182,31 +182,13 @@ def observaties_kaart(dag=None):
         folium.CircleMarker(location=[lat, lon],radius=6,popup=popup,color=kleur,fill=True,fill_color=kleur,fill_opacity=0.9).add_to(kaart)
 
     legenda_html = f'''
-    <div style="
-        position: fixed; 
-        bottom: 50px; 
-        left: 50px; 
-        background-color: white; 
-        border: 1px solid gray; 
-        padding: 10px; 
-        max-height: 200px; 
-        overflow-y: auto;
-        font-family: Arial, sans-serif;
-        font-size: 12px;
-        z-index: 9999;">
+    <div style="position: fixed; bottom: 50px; left: 50px; background-color: white; border: 1px solid gray; padding: 10px; max-height: 200px; overflow-y: auto; font-family: Arial, sans-serif; font-size: 12px; z-index: 9999;">
         <b>Soorten op {datetime.strptime(dag, '%Y-%m-%d').strftime('%d-%m-%Y')}</b><br>
     '''
     for soort, kleur in kleuren.items():
         legenda_html += f'''
         <div style="margin: 4px 0; display: flex; align-items: center;">
-            <span style="
-                background-color: {kleur}; 
-                display: inline-block; 
-                width: 15px; 
-                height: 15px; 
-                margin-right: 8px;
-                border: 1px solid #555;
-            "></span>
+            <span style="background-color: {kleur}; display: inline-block; width: 15px; height: 15px; margin-right: 8px; border: 1px solid #555;"></span>
             {soort}
         </div>
         '''
