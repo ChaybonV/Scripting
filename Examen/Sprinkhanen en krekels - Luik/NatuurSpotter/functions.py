@@ -207,9 +207,6 @@ def seizoensanalyse(soort, jaar):
     zoek_soup = BeautifulSoup(zoek_resp.text, "html.parser")
 
     lijstitem = zoek_soup.find("li", class_="lead")
-    if not lijstitem:
-        print("Soort niet gevonden.")
-        return
     href = lijstitem.find("a")["href"]
     soort_id = href.strip("/").split("/")[-1]
 
@@ -260,12 +257,63 @@ def seizoensanalyse(soort, jaar):
     labels = list(telling.keys())
     values = list(telling.values())
 
+    plt.figure(figsize=(8,5))
     plt.bar(labels, values, color=["lightgreen", "orange", "sienna", "skyblue"])
     plt.title(f'Waarnemingen van "{soort}" per seizoen in {jaar}')
     plt.xlabel("Seizoen")
     plt.ylabel("Aantal waarnemingen")
     plt.tight_layout()
-    plt.show()
+
+    os.makedirs("data", exist_ok=True)
+    plot_path = f"data/{soort.replace(' ', '_')}_{jaar}_seizoensanalyse.png"
+    plt.savefig(plot_path)
+    plt.close()
+
+    minst_voorkomend_seizoen = min(telling, key=telling.get)
+    meest_voorkomend_seizoen = max(telling, key=telling.get)
+
+    prompt = (
+        f"Voor de soort '{soort}' zijn er in het jaar {jaar} minder waarnemingen in de {minst_voorkomend_seizoen.lower()}."
+        f" Waarom zou deze soort dan minder worden waargenomen in de {minst_voorkomend_seizoen.lower()} en hoe komt het dat ze vaker zichtbaar zijn in de {meest_voorkomend_seizoen.lower()}? Benoem dit in een tekst van ongeveer 10 zinnen."
+    )
+
+    llm_payload = {
+        "messages": [
+            {
+                "role": "user",
+                "content": prompt
+            }
+        ],
+        "web_access": False
+    }
+
+    headers = {
+        "x-rapidapi-key": "a69cdae89amshdb1eb1b1b44f30bp1f4e96jsn8f47560ad780",
+        "x-rapidapi-host": "open-ai21.p.rapidapi.com",
+        "Content-Type": "application/json"
+    }
+
+    response = requests.post("https://open-ai21.p.rapidapi.com/conversationllama", json=llm_payload, headers=headers)
+    result = response.json()
+    uitleg = result["result"]
+
+    pdf_path = f"data/{soort.replace(' ', '_')}_{jaar}_seizoensanalyse.pdf"
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_auto_page_break(auto=True, margin=15)
+
+    # Voeg plot afbeelding toe
+    pdf.image(plot_path, x=10, y=10, w=pdf.w - 20)
+    pdf.ln(130)
+
+    # Voeg uitleg toe
+    pdf.set_font("Helvetica", '', 11)
+    uitleg_regels = uitleg.split('\n')
+    for regel in uitleg_regels:
+        pdf.multi_cell(0, 8, regel)
+    pdf.output(pdf_path)
+
+    print(f"PDF opgeslagen als: {pdf_path}")
 
 # def biodiversiteit_analyse(maand=None, jaar=None):
 #     print()
