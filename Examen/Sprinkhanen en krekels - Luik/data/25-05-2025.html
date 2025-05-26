@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html>
+<head>
+    
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="https://netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap-glyphicons.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.2.0/css/all.min.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/python-visualization/folium/folium/templates/leaflet.awesome.rotate.min.css"/>
+    
+            <meta name="viewport" content="width=device-width,
+                initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+            <style>
+                #map_9453faa17d463d8a278edc1c69abddb2 {
+                    position: relative;
+                    width: 100.0%;
+                    height: 100.0%;
+                    left: 0.0%;
+                    top: 0.0%;
+                }
+                .leaflet-container { font-size: 1rem; }
+            </style>
+
+            <style>html, body {
+                width: 100%;
+                height: 100%;
+                margin: 0;
+                padding: 0;
+            }
+            </style>
+
+            <style>#map {
+                position:absolute;
+                top:0;
+                bottom:0;
+                right:0;
+                left:0;
+                }
+            </style>
+
+            <script>
+                L_NO_TOUCH = false;
+                L_DISABLE_3D = false;
+            </script>
+
+        
+</head>
+<body>
+    
+    
+    <div style="position: fixed; bottom: 50px; left: 50px; background-color: white; border: 1px solid gray; padding: 10px; max-height: 200px; overflow-y: auto; font-family: Arial, sans-serif; font-size: 12px; z-index: 9999;">
+        <b>Soorten op 25-05-2025</b><br>
+    
+        <div style="margin: 4px 0; display: flex; align-items: center;">
+            <span style="background-color: #c9b1a6; display: inline-block; width: 15px; height: 15px; margin-right: 8px; border: 1px solid #555;"></span>
+            Gouden sprinkhaan
+        </div>
+        
+        <div style="margin: 4px 0; display: flex; align-items: center;">
+            <span style="background-color: #f1a8c2; display: inline-block; width: 15px; height: 15px; margin-right: 8px; border: 1px solid #555;"></span>
+            Kalkdoorntje
+        </div>
+        
+        <div style="margin: 4px 0; display: flex; align-items: center;">
+            <span style="background-color: #6ff82b; display: inline-block; width: 15px; height: 15px; margin-right: 8px; border: 1px solid #555;"></span>
+            Veldkrekel
+        </div>
+        
+        <div style="margin: 4px 0; display: flex; align-items: center;">
+            <span style="background-color: #887956; display: inline-block; width: 15px; height: 15px; margin-right: 8px; border: 1px solid #555;"></span>
+            Zuidelijke boomsprinkhaan
+        </div>
+        
+        <div style="margin: 4px 0; display: flex; align-items: center;">
+            <span style="background-color: #17e23b; display: inline-block; width: 15px; height: 15px; margin-right: 8px; border: 1px solid #555;"></span>
+            Boomsprinkhaan onbekend
+        </div>
+        
+        <div style="margin: 4px 0; display: flex; align-items: center;">
+            <span style="background-color: #394668; display: inline-block; width: 15px; height: 15px; margin-right: 8px; border: 1px solid #555;"></span>
+            Grote groene sabelsprinkhaan
+        </div>
+        </div>
+    
+            <div class="folium-map" id="map_9453faa17d463d8a278edc1c69abddb2" ></div>
+        
+</body>
+<script>
+    
+    
+            var map_9453faa17d463d8a278edc1c69abddb2 = L.map(
+                "map_9453faa17d463d8a278edc1c69abddb2",
+                {
+                    center: [50.5, 5.5],
+                    crs: L.CRS.EPSG3857,
+                    ...{
+  "zoom": 9,
+  "zoomControl": true,
+  "preferCanvas": false,
+}
+
+                }
+            );
+
+            
+
+        
+    
+            var tile_layer_4f20d6106793ee45ab77e63b5e99579d = L.tileLayer(
+                "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+                {
+  "minZoom": 0,
+  "maxZoom": 19,
+  "maxNativeZoom": 19,
+  "noWrap": false,
+  "attribution": "\u0026copy; \u003ca href=\"https://www.openstreetmap.org/copyright\"\u003eOpenStreetMap\u003c/a\u003e contributors",
+  "subdomains": "abc",
+  "detectRetina": false,
+  "tms": false,
+  "opacity": 1,
+}
+
+            );
+        
+    
+            tile_layer_4f20d6106793ee45ab77e63b5e99579d.addTo(map_9453faa17d463d8a278edc1c69abddb2);
+        
+    
+            var circle_marker_fc8d14d52094af3610bda27a39ea9d1c = L.circleMarker(
+                [50.4112109, 5.8464844],
+                {"bubblingMouseEvents": true, "color": "#c9b1a6", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#c9b1a6", "fillOpacity": 0.9, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 6, "stroke": true, "weight": 3}
+            ).addTo(map_9453faa17d463d8a278edc1c69abddb2);
+        
+    
+        var popup_1bd2edd26ea10a544f37b70d4e39635b = L.popup({
+  "maxWidth": 300,
+});
+
+        
+            
+                var i_frame_af92dd7b16274876e9e88e50daac33a8 = $(`<iframe src="data:text/html;charset=utf-8;base64,CiAgICAKICAgICAgICA8ZGl2IHN0eWxlPSJtaW4td2lkdGg6IDE4MHB4OyI+CiAgICAgICAgICAgIDxiPkxvY2F0aWU6PC9iPiBIZXJtYWxsZS1zb3VzLUFyZ2VudGVhdTxicj4KICAgICAgICAgICAgPGI+U29vcnQ6PC9iPiA8c3BhbiBzdHlsZT0iY29sb3I6ICNjOWIxYTY7Ij5Hb3VkZW4gc3ByaW5raGFhbjwvc3Bhbj4KICAgICAgICA8L2Rpdj4KICAgICAgICA=" width="220" style="border:none !important;" height="70"></iframe>`)[0];
+                popup_1bd2edd26ea10a544f37b70d4e39635b.setContent(i_frame_af92dd7b16274876e9e88e50daac33a8);
+            
+        
+
+        circle_marker_fc8d14d52094af3610bda27a39ea9d1c.bindPopup(popup_1bd2edd26ea10a544f37b70d4e39635b)
+        ;
+
+        
+    
+    
+            var circle_marker_8ac9adb6eab2d379dc3ca7bc958c60e1 = L.circleMarker(
+                [50.5047776, 5.4167241],
+                {"bubblingMouseEvents": true, "color": "#f1a8c2", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#f1a8c2", "fillOpacity": 0.9, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 6, "stroke": true, "weight": 3}
+            ).addTo(map_9453faa17d463d8a278edc1c69abddb2);
+        
+    
+        var popup_2845c0c712225dd5dfc1b3c7fb8b9cf0 = L.popup({
+  "maxWidth": 300,
+});
+
+        
+            
+                var i_frame_c30ab2dc3c77e03e4dfcf57f89daa98a = $(`<iframe src="data:text/html;charset=utf-8;base64,CiAgICAKICAgICAgICA8ZGl2IHN0eWxlPSJtaW4td2lkdGg6IDE4MHB4OyI+CiAgICAgICAgICAgIDxiPkxvY2F0aWU6PC9iPiBIZXJtYWxsZS1zb3VzLUFyZ2VudGVhdTxicj4KICAgICAgICAgICAgPGI+U29vcnQ6PC9iPiA8c3BhbiBzdHlsZT0iY29sb3I6ICNmMWE4YzI7Ij5LYWxrZG9vcm50amU8L3NwYW4+CiAgICAgICAgPC9kaXY+CiAgICAgICAg" width="220" style="border:none !important;" height="70"></iframe>`)[0];
+                popup_2845c0c712225dd5dfc1b3c7fb8b9cf0.setContent(i_frame_c30ab2dc3c77e03e4dfcf57f89daa98a);
+            
+        
+
+        circle_marker_8ac9adb6eab2d379dc3ca7bc958c60e1.bindPopup(popup_2845c0c712225dd5dfc1b3c7fb8b9cf0)
+        ;
+
+        
+    
+    
+            var circle_marker_2caa94b522cd07ed0511ddbc09bd81bd = L.circleMarker(
+                [50.538601, 5.2600467],
+                {"bubblingMouseEvents": true, "color": "#6ff82b", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#6ff82b", "fillOpacity": 0.9, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 6, "stroke": true, "weight": 3}
+            ).addTo(map_9453faa17d463d8a278edc1c69abddb2);
+        
+    
+        var popup_41ac0caab6f158d3fb619451f77f2886 = L.popup({
+  "maxWidth": 300,
+});
+
+        
+            
+                var i_frame_ac51e5ebc0af98b8e5d87275cfca3c7a = $(`<iframe src="data:text/html;charset=utf-8;base64,CiAgICAKICAgICAgICA8ZGl2IHN0eWxlPSJtaW4td2lkdGg6IDE4MHB4OyI+CiAgICAgICAgICAgIDxiPkxvY2F0aWU6PC9iPiBIZXJtYWxsZS1zb3VzLUFyZ2VudGVhdTxicj4KICAgICAgICAgICAgPGI+U29vcnQ6PC9iPiA8c3BhbiBzdHlsZT0iY29sb3I6ICM2ZmY4MmI7Ij5WZWxka3Jla2VsPC9zcGFuPgogICAgICAgIDwvZGl2PgogICAgICAgIA==" width="220" style="border:none !important;" height="70"></iframe>`)[0];
+                popup_41ac0caab6f158d3fb619451f77f2886.setContent(i_frame_ac51e5ebc0af98b8e5d87275cfca3c7a);
+            
+        
+
+        circle_marker_2caa94b522cd07ed0511ddbc09bd81bd.bindPopup(popup_41ac0caab6f158d3fb619451f77f2886)
+        ;
+
+        
+    
+    
+            var circle_marker_3b7b42a0e45d2ccd12d682b7853179a9 = L.circleMarker(
+                [50.6890816, 5.3346735],
+                {"bubblingMouseEvents": true, "color": "#887956", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#887956", "fillOpacity": 0.9, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 6, "stroke": true, "weight": 3}
+            ).addTo(map_9453faa17d463d8a278edc1c69abddb2);
+        
+    
+        var popup_efa5ec47c4b091ef64aed1216530bff1 = L.popup({
+  "maxWidth": 300,
+});
+
+        
+            
+                var i_frame_8a82f9f691224781be03c7fdd781efe7 = $(`<iframe src="data:text/html;charset=utf-8;base64,CiAgICAKICAgICAgICA8ZGl2IHN0eWxlPSJtaW4td2lkdGg6IDE4MHB4OyI+CiAgICAgICAgICAgIDxiPkxvY2F0aWU6PC9iPiBIZXJtYWxsZS1zb3VzLUFyZ2VudGVhdTxicj4KICAgICAgICAgICAgPGI+U29vcnQ6PC9iPiA8c3BhbiBzdHlsZT0iY29sb3I6ICM4ODc5NTY7Ij5adWlkZWxpamtlIGJvb21zcHJpbmtoYWFuPC9zcGFuPgogICAgICAgIDwvZGl2PgogICAgICAgIA==" width="220" style="border:none !important;" height="70"></iframe>`)[0];
+                popup_efa5ec47c4b091ef64aed1216530bff1.setContent(i_frame_8a82f9f691224781be03c7fdd781efe7);
+            
+        
+
+        circle_marker_3b7b42a0e45d2ccd12d682b7853179a9.bindPopup(popup_efa5ec47c4b091ef64aed1216530bff1)
+        ;
+
+        
+    
+    
+            var circle_marker_3b780e91580bc50656c93508acd44507 = L.circleMarker(
+                [50.5033196, 5.1773498],
+                {"bubblingMouseEvents": true, "color": "#17e23b", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#17e23b", "fillOpacity": 0.9, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 6, "stroke": true, "weight": 3}
+            ).addTo(map_9453faa17d463d8a278edc1c69abddb2);
+        
+    
+        var popup_cfdaa431c6657372b3937f00c94a1cf1 = L.popup({
+  "maxWidth": 300,
+});
+
+        
+            
+                var i_frame_2dcea5bb20c82c9c36126779fac14cac = $(`<iframe src="data:text/html;charset=utf-8;base64,CiAgICAKICAgICAgICA8ZGl2IHN0eWxlPSJtaW4td2lkdGg6IDE4MHB4OyI+CiAgICAgICAgICAgIDxiPkxvY2F0aWU6PC9iPiBIZXJtYWxsZS1zb3VzLUFyZ2VudGVhdTxicj4KICAgICAgICAgICAgPGI+U29vcnQ6PC9iPiA8c3BhbiBzdHlsZT0iY29sb3I6ICMxN2UyM2I7Ij5Cb29tc3ByaW5raGFhbiBvbmJla2VuZDwvc3Bhbj4KICAgICAgICA8L2Rpdj4KICAgICAgICA=" width="220" style="border:none !important;" height="70"></iframe>`)[0];
+                popup_cfdaa431c6657372b3937f00c94a1cf1.setContent(i_frame_2dcea5bb20c82c9c36126779fac14cac);
+            
+        
+
+        circle_marker_3b780e91580bc50656c93508acd44507.bindPopup(popup_cfdaa431c6657372b3937f00c94a1cf1)
+        ;
+
+        
+    
+    
+            var circle_marker_f55072e1edeef44e5f86d96b8d41e4a8 = L.circleMarker(
+                [50.7106536, 5.6806787],
+                {"bubblingMouseEvents": true, "color": "#394668", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#394668", "fillOpacity": 0.9, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 6, "stroke": true, "weight": 3}
+            ).addTo(map_9453faa17d463d8a278edc1c69abddb2);
+        
+    
+        var popup_bb49719bd1f158e79d440b6b9c6f7a13 = L.popup({
+  "maxWidth": 300,
+});
+
+        
+            
+                var i_frame_3485b222990210cf228105824f7750d9 = $(`<iframe src="data:text/html;charset=utf-8;base64,CiAgICAKICAgICAgICA8ZGl2IHN0eWxlPSJtaW4td2lkdGg6IDE4MHB4OyI+CiAgICAgICAgICAgIDxiPkxvY2F0aWU6PC9iPiBIZXJtYWxsZS1zb3VzLUFyZ2VudGVhdTxicj4KICAgICAgICAgICAgPGI+U29vcnQ6PC9iPiA8c3BhbiBzdHlsZT0iY29sb3I6ICMzOTQ2Njg7Ij5Hcm90ZSBncm9lbmUgc2FiZWxzcHJpbmtoYWFuPC9zcGFuPgogICAgICAgIDwvZGl2PgogICAgICAgIA==" width="220" style="border:none !important;" height="70"></iframe>`)[0];
+                popup_bb49719bd1f158e79d440b6b9c6f7a13.setContent(i_frame_3485b222990210cf228105824f7750d9);
+            
+        
+
+        circle_marker_f55072e1edeef44e5f86d96b8d41e4a8.bindPopup(popup_bb49719bd1f158e79d440b6b9c6f7a13)
+        ;
+
+        
+    
+</script>
+</html>
