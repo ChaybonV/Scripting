@@ -2,9 +2,15 @@ import os
 import requests
 from bs4 import BeautifulSoup
 from datetime import date
+from datetime import datetime
 from fpdf import FPDF
 from PIL import Image
 from io import BytesIO
+import folium
+import random
+from geopy.geocoders import Nominatim
+from geopy.extra.rate_limiter import RateLimiter
+
 
 def soort_info(soort):
     zoek_url = f"https://waarnemingen.be/search/?q={soort.replace(' ', '+')}"
@@ -35,7 +41,7 @@ def soort_info(soort):
 
     afbeelding_tag = soup.find("figure", class_="app-ratio-box-4-3 lightbox-gallery")
     img = afbeelding_tag.find("img") if afbeelding_tag else None
-    afbeelding_url = "https://waarnemingen.be" + img["src"] if img else None
+    afbeelding_url = "https://waarnemingen.be" + img["src"] if img else "Geen afbeelding gevonden"
 
     vandaag = date.today()
     vorig_jaar = vandaag.replace(year=vandaag.year - 1)
@@ -123,8 +129,81 @@ def soort_info(soort):
     pdf.output(pad)
     print(f"PDF opgeslagen als: {pad}")
 
-# def observaties_kaart(dag=None):
-#     print()
+def observaties_kaart(dag=None):
+    if dag is None:
+        dag = datetime.today().strftime('%Y-%m-%d')
+
+    url = f"https://waarnemingen.be/fieldwork/observations/daylist/?date={dag}&species_group=14&country_division=22"
+    response = requests.get(url)
+    soup = BeautifulSoup(response.text, "html.parser")
+
+    table = soup.find("table", class_="table-bordered")
+    if not table:
+        print("Geen waarnemingstabel gevonden.")
+        return
+
+    rows = table.find("tbody").find_all("tr")
+    if not rows:
+        print("Geen waarnemingen gevonden.")
+        return
+
+    # Initialiseer geolocator
+    geolocator = Nominatim(user_agent="waarnemingen-scraper")
+    geocode = RateLimiter(geolocator.geocode, min_delay_seconds=1)
+    kaart = folium.Map(location=[50.5, 5.5], zoom_start=9)
+
+    kleuren = {}
+    data = []
+
+    for rij in rows:
+        kolommen = rij.find_all("td")
+        if len(kolommen) < 5:
+            continue
+
+        soort_html = kolommen[3]
+        locatie_html = kolommen[4]
+
+        soort_naam = soort_html.text.strip().split(" - ")[0]
+        locatie_naam = locatie_html.text.strip()
+
+        # Verwijder (LG) enzovoort
+        plaatsnaam = locatie_naam.split("(")[0].strip()
+
+        locatie = geocode(f"{plaatsnaam}, Belgium")
+        if locatie:
+            lat, lon = locatie.latitude, locatie.longitude
+            data.append((lat, lon, soort_naam, locatie_naam))
+        else:
+            print(f"Kon geen coördinaten vinden voor: {plaatsnaam}")
+
+    if not data:
+        print("Geen locaties met coördinaten gevonden.")
+        return
+
+    for lat, lon, soort, locatie in data:
+        if soort not in kleuren:
+            kleuren[soort] = "#{:06x}".format(random.randint(0, 0xFFFFFF))
+
+        folium.CircleMarker(
+            location=[lat, lon],
+            radius=6,
+            popup=f"Locatie: {locatie}<br>Soort: {soort}",
+            color=kleuren[soort],
+            fill=True,
+            fill_color=kleuren[soort],
+            fill_opacity=0.8
+        ).add_to(kaart)
+
+    # Voeg legende toe als HTML
+    legenda_html = '<div style="position: fixed; bottom: 50px; left: 50px; background-color: white; border: 1px solid gray; padding: 10px;"><b>Soorten op ' + dag + '</b><br>'
+    for soort, kleur in kleuren.items():
+        legenda_html += f'<div style="margin:2px;"><span style="background-color:{kleur}; display:inline-block; width:10px; height:10px; margin-right:5px;"></span>{soort}</div>'
+    legenda_html += '</div>'
+    kaart.get_root().html.add_child(folium.Element(legenda_html))
+
+    bestandsnaam = f"{dag}.html"
+    kaart.save(bestandsnaam)
+    print(f"Kaart is bewaard als {bestandsnaam}")
 
 # def seizoensanalyse(soort, jaar):
 #     print()
