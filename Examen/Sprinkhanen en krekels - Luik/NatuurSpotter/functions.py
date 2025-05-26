@@ -1,8 +1,7 @@
 import os
 import requests
 from bs4 import BeautifulSoup
-from datetime import date
-from datetime import datetime
+from datetime import date, datetime
 from fpdf import FPDF
 from PIL import Image
 from io import BytesIO
@@ -136,18 +135,9 @@ def observaties_kaart(dag=None):
     url = f"https://waarnemingen.be/fieldwork/observations/daylist/?date={dag}&species_group=14&country_division=22"
     response = requests.get(url)
     soup = BeautifulSoup(response.text, "html.parser")
-
     table = soup.find("table", class_="table-bordered")
-    if not table:
-        print("Geen waarnemingstabel gevonden.")
-        return
-
     rows = table.find("tbody").find_all("tr")
-    if not rows:
-        print("Geen waarnemingen gevonden.")
-        return
 
-    # Initialiseer geolocator
     geolocator = Nominatim(user_agent="waarnemingen-scraper")
     geocode = RateLimiter(geolocator.geocode, min_delay_seconds=1)
     kaart = folium.Map(location=[50.5, 5.5], zoom_start=9)
@@ -165,45 +155,68 @@ def observaties_kaart(dag=None):
 
         soort_naam = soort_html.text.strip().split(" - ")[0]
         locatie_naam = locatie_html.text.strip()
-
-        # Verwijder (LG) enzovoort
         plaatsnaam = locatie_naam.split("(")[0].strip()
-
         locatie = geocode(f"{plaatsnaam}, Belgium")
+
         if locatie:
             lat, lon = locatie.latitude, locatie.longitude
-            data.append((lat, lon, soort_naam, locatie_naam))
-        else:
-            print(f"Kon geen coördinaten vinden voor: {plaatsnaam}")
+            data.append((lat, lon, soort_naam, plaatsnaam))
 
     if not data:
-        print("Geen locaties met coördinaten gevonden.")
+        print("Geen locaties gevonden")
         return
 
     for lat, lon, soort, locatie in data:
         if soort not in kleuren:
             kleuren[soort] = "#{:06x}".format(random.randint(0, 0xFFFFFF))
+        kleur = kleuren[soort]
 
-        folium.CircleMarker(
-            location=[lat, lon],
-            radius=6,
-            popup=f"Locatie: {locatie}<br>Soort: {soort}",
-            color=kleuren[soort],
-            fill=True,
-            fill_color=kleuren[soort],
-            fill_opacity=0.8
-        ).add_to(kaart)
+        html_popup = f'''
+        <div style="min-width: 180px;">
+            <b>Locatie:</b> {plaatsnaam}<br>
+            <b>Soort:</b> <span style="color: {kleur};">{soort}</span>
+        </div>
+        '''
 
-    # Voeg legende toe als HTML
-    legenda_html = '<div style="position: fixed; bottom: 50px; left: 50px; background-color: white; border: 1px solid gray; padding: 10px;"><b>Soorten op ' + dag + '</b><br>'
+        popup = folium.Popup(folium.IFrame(html=html_popup, width=220, height=70), max_width=300)
+        folium.CircleMarker(location=[lat, lon],radius=6,popup=popup,color=kleur,fill=True,fill_color=kleur,fill_opacity=0.9).add_to(kaart)
+
+    legenda_html = f'''
+    <div style="
+        position: fixed; 
+        bottom: 50px; 
+        left: 50px; 
+        background-color: white; 
+        border: 1px solid gray; 
+        padding: 10px; 
+        max-height: 200px; 
+        overflow-y: auto;
+        font-family: Arial, sans-serif;
+        font-size: 12px;
+        z-index: 9999;">
+        <b>Soorten op {datetime.strptime(dag, '%Y-%m-%d').strftime('%d-%m-%Y')}</b><br>
+    '''
     for soort, kleur in kleuren.items():
-        legenda_html += f'<div style="margin:2px;"><span style="background-color:{kleur}; display:inline-block; width:10px; height:10px; margin-right:5px;"></span>{soort}</div>'
+        legenda_html += f'''
+        <div style="margin: 4px 0; display: flex; align-items: center;">
+            <span style="
+                background-color: {kleur}; 
+                display: inline-block; 
+                width: 15px; 
+                height: 15px; 
+                margin-right: 8px;
+                border: 1px solid #555;
+            "></span>
+            {soort}
+        </div>
+        '''
     legenda_html += '</div>'
-    kaart.get_root().html.add_child(folium.Element(legenda_html))
 
-    bestandsnaam = f"{dag}.html"
-    kaart.save(bestandsnaam)
-    print(f"Kaart is bewaard als {bestandsnaam}")
+    kaart.get_root().html.add_child(folium.Element(legenda_html))
+    os.makedirs("data", exist_ok=True)
+    kaart_path = os.path.join("data", f"{datetime.strptime(dag, '%Y-%m-%d').strftime('%d-%m-%Y')}.html")
+    kaart.save(kaart_path)
+    print(f"Kaart opgeslagen als {kaart_path}")
 
 # def seizoensanalyse(soort, jaar):
 #     print()
