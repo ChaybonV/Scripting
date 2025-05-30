@@ -67,10 +67,10 @@ def soort_info(soort):
                 locatie = kolommen[2].text.strip()
                 observaties.append(f"{datum}   {aantal}   {locatie}")
 
-    wiki_beschrijving = "Geen Wikipedia informatie gevonden"
-    wiki_latijnse_naam = latijnse_naam  # fallback
-    
     # BRON 2
+    wiki_beschrijving = "Geen Wikipedia informatie gevonden"
+    wiki_latijnse_naam = latijnse_naam
+
     wiki_zoek_url = f"https://nl.wikipedia.org/wiki/{soort.replace(' ', '_')}"
     wiki_resp = requests.get(wiki_zoek_url)
     
@@ -83,12 +83,13 @@ def soort_info(soort):
             if latijn_element:
                 wiki_latijnse_naam = latijn_element.find("b").text.strip() if latijn_element.find("b") else latijn_element.text.strip()
         
+        # Haal nuttige paragraaf van Wikipedia
         content_div = wiki_soup.find("div", class_="mw-content-ltr mw-parser-output")
         if content_div:
             paragraphs = content_div.find_all("p")
             for p in paragraphs:
                 text = p.get_text().strip()
-                # Alleen relevante paragrafen (niet navigatie)
+                # Neem alleen relevante paragrafen (niet navigatie)
                 if len(text) > 100 and any(keyword in text.lower() for keyword in ['insect', 'springhaan', 'familie', 'soort', 'kleur', 'lang']):
                     wiki_beschrijving = text.replace('\n', ' ').strip()
                     # Beperk tot eerste 2-3 zinnen voor beknoptheid
@@ -120,13 +121,14 @@ def soort_info(soort):
         pdf.ln(60)
 
     # Latijnse naam
-    pdf.set_font("Helvetica", 'B', 10)
+    pdf.set_font("Helvetica", 'B', 11)
     pdf.cell(0, 6, f"Latijnse naam: {wiki_latijnse_naam}", ln=True)
     pdf.cell(0, 6, f"Zeldzaamheidsstatus: {status}", ln=True)
     pdf.ln(5)
 
     # Beschrijving
-    pdf.set_font("Helvetica", '', 8)
+    pdf.set_font("Helvetica", '', 9)
+    # Wikipedia beschrijving
     if wiki_beschrijving != "Geen Wikipedia informatie gevonden":
         pdf.set_font("Helvetica", 'B', 10)
         pdf.cell(0, 5, "Algemene beschrijving:", ln=True)
@@ -136,7 +138,6 @@ def soort_info(soort):
             if regel.strip():
                 pdf.multi_cell(0, 4, regel.strip())
         pdf.ln(2)
-    
     # Waarnemingen.be beschrijving 
     if beschrijving != "Geen beschrijving gevonden":
         pdf.set_font("Helvetica", 'B', 10)
@@ -146,11 +147,11 @@ def soort_info(soort):
         for regel in beschrijving_regels:
             if regel.strip():
                 pdf.multi_cell(0, 4, regel.strip())
-    
     pdf.ln(5)
 
+    # Observaties
     if observaties:
-        pdf.set_font("Helvetica", 'B', 9)
+        pdf.set_font("Helvetica", 'B', 10)
         pdf.cell(50, 5, "Datum", border=0)
         pdf.cell(20, 5, "Aantal", border=0)
         pdf.cell(0, 5, "Locatie", ln=True, border=0)
@@ -159,6 +160,7 @@ def soort_info(soort):
         for lijn in observaties:
             parts = lijn.split()
             if len(parts) >= 4:
+                # Check of het 2e deel een tijd is (bevat ":")
                 if ":" in parts[1]:
                     # Datum + tijd format
                     datum = parts[0] + " " + parts[1]
