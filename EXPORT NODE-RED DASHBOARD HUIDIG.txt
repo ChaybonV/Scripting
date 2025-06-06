@@ -1,19 +1,19 @@
 [
     {
-        "id": "ea8b5619ae5b3556",
+        "id": "7100982d56dc1786",
         "type": "tab",
         "label": "NatuurSpotter Dashboard",
         "disabled": false,
         "info": ""
     },
     {
-        "id": "e6163b791bdef47a",
+        "id": "33dd26cf96bd0389",
         "type": "ui_button",
-        "z": "ea8b5619ae5b3556",
+        "z": "7100982d56dc1786",
         "name": "Load Biodiversity",
         "group": "09546c12f4874d7b",
         "order": 1,
-        "width": 12,
+        "width": 6,
         "height": 1,
         "passthru": false,
         "label": "Laad Biodiversiteit Data",
@@ -30,14 +30,14 @@
         "y": 100,
         "wires": [
             [
-                "0568ebcf6182185f"
+                "e46a7378ee47e238"
             ]
         ]
     },
     {
-        "id": "0568ebcf6182185f",
+        "id": "e46a7378ee47e238",
         "type": "file in",
-        "z": "ea8b5619ae5b3556",
+        "z": "7100982d56dc1786",
         "name": "Read CSV",
         "filename": "data/waarnemingen_4_2024.csv",
         "filenameType": "str",
@@ -49,16 +49,16 @@
         "y": 100,
         "wires": [
             [
-                "72aeab6c100a1a0d"
+                "6c911bc31dcdeed9"
             ]
         ]
     },
     {
-        "id": "72aeab6c100a1a0d",
+        "id": "6c911bc31dcdeed9",
         "type": "function",
-        "z": "ea8b5619ae5b3556",
-        "name": "Process Data",
-        "func": "var lines = msg.payload.split('\\n').filter(line => line.trim());\nvar data = [];\nfor (var i = 1; i < lines.length; i++) {\n\tvar cols = lines[i].split(';');\n\tif (cols.length >= 3) {\n\t\tvar nameparts = cols[0].split(' - ');\n\t\tvar soort = nameparts[0].trim();\n\t\tvar wetenschappelijk = nameparts[1] ? nameparts[1].trim() : '';\n\t\tvar aantal = parseInt(cols[1]) || 0;\n\t\tvar datum = cols[2].trim();\n\t\tdata.push({soort: soort, wetenschappelijk: wetenschappelijk, aantal: aantal, datum: datum});\n\t}\n}\nvar sortedHigh = data.slice().sort((a, b) => b.aantal - a.aantal);\nvar topSoorten = sortedHigh.slice(0, 10);\nvar chartMsgs = [];\nfor (var i = 0; i < topSoorten.length; i++) {\n\tchartMsgs.push({payload: topSoorten[i].aantal, topic: topSoorten[i].soort});\n}\nvar sortedLow = data.slice().sort((a, b) => a.aantal - b.aantal);\nvar zeldzameSoorten = sortedLow.slice(0, 10);\nfor (var j = 0; j < chartMsgs.length; j++) {\n\tnode.send([chartMsgs[j], null]);\n}\nreturn [null, {payload: zeldzameSoorten, topic: 'table'}];",
+        "z": "7100982d56dc1786",
+        "name": "Process Biodiversity Data",
+        "func": "var lines = msg.payload.split('\\n').filter(line => line.trim());\nvar data = [];\n\nfor (var i = 1; i < lines.length; i++) {\n    var cols = lines[i].split(';');\n    if (cols.length >= 3) {\n        var nameparts = cols[0].split(' - ');\n        var soort = nameparts[0].trim();\n        var wetenschappelijk = nameparts[1] ? nameparts[1].trim() : '';\n        var aantal = parseInt(cols[1]) || 0;\n        var datum = cols[2].trim();\n        data.push({\n            soort: soort,\n            wetenschappelijk: wetenschappelijk,\n            aantal: aantal,\n            datum: datum\n        });\n    }\n}\n\n// Sorteer voor meest waargenomen soorten (top 10)\nvar sortedHigh = data.slice().sort((a, b) => b.aantal - a.aantal);\nvar topSoorten = sortedHigh.slice(0, 10);\n\n// Maak chart berichten\nvar chartMsgs = [];\nfor (var i = 0; i < topSoorten.length; i++) {\n    chartMsgs.push({\n        payload: topSoorten[i].aantal,\n        topic: topSoorten[i].soort\n    });\n}\n\n// Sorteer voor zeldzame soorten (laagste aantallen)\nvar sortedLow = data.slice().sort((a, b) => a.aantal - b.aantal);\nvar zeldzameSoorten = sortedLow.slice(0, 10);\n\n// Verstuur chart data\nfor (var j = 0; j < chartMsgs.length; j++) {\n    node.send([chartMsgs[j], null]);\n}\n\n// Verstuur tabel data\nreturn [null, {payload: zeldzameSoorten, topic: 'table'}];",
         "outputs": 2,
         "timeout": "",
         "noerr": 0,
@@ -69,23 +69,22 @@
         "y": 100,
         "wires": [
             [
-                "d8a0f965b39f6ddd",
-                "393b10dcf20e0b42"
+                "63fe64c2ba53712d"
             ],
             [
-                "c96f0e2a34bf9516"
+                "f91f946dacdfc9d6"
             ]
         ]
     },
     {
-        "id": "d8a0f965b39f6ddd",
+        "id": "63fe64c2ba53712d",
         "type": "ui_chart",
-        "z": "ea8b5619ae5b3556",
+        "z": "7100982d56dc1786",
         "name": "Soortenrijkdom Chart",
         "group": "04644e41071ad5cc",
         "order": 1,
-        "width": "0",
-        "height": "0",
+        "width": 12,
+        "height": 8,
         "label": "Meest Waargenomen Soorten",
         "chartType": "horizontalBar",
         "legend": "false",
@@ -94,7 +93,7 @@
         "nodata": "Klik op 'Laad Biodiversiteit Data' om de grafiek te tonen",
         "dot": false,
         "ymin": "0",
-        "ymax": "600",
+        "ymax": "",
         "removeOlder": 1,
         "removeOlderPoints": "",
         "removeOlderUnit": "3600",
@@ -110,142 +109,160 @@
             "#1abc9c",
             "#34495e",
             "#e67e22",
-            "#95a5a6"
+            "#95a5a6",
+            "#16a085"
         ],
         "outputs": 1,
         "useDifferentColor": false,
         "className": "",
-        "x": 760,
-        "y": 100,
+        "x": 780,
+        "y": 80,
         "wires": [
             []
         ]
     },
     {
-        "id": "c96f0e2a34bf9516",
+        "id": "f91f946dacdfc9d6",
         "type": "ui_template",
-        "z": "ea8b5619ae5b3556",
+        "z": "7100982d56dc1786",
         "group": "4654b640b7594b1f",
-        "name": "Zeldzame Soorten",
+        "name": "Zeldzame Soorten Tabel",
         "order": 1,
         "width": 12,
-        "height": 16,
-        "format": "<style>\n/* Override Node-RED default styling */\n.nr-dashboard-template {\n    padding: 0 !important;\n    margin: 0 !important;\n    background: transparent !important;\n    box-shadow: none !important;\n    border: none !important;\n}\n\n.nr-dashboard-template .nr-dashboard-template-body {\n    padding: 0 !important;\n    margin: 0 !important;\n}\n\n/* Main container */\n.species-container {\n    width: 100%;\n    height: 100%;\n    background: #f8f9fa;\n    border-radius: 12px;\n    overflow: hidden;\n    box-shadow: 0 4px 20px rgba(0,0,0,0.08);\n}\n\n/* Sticky header */\n.species-header {\n    margin: 0;\n    padding: 25px;\n    color: #2c3e50;\n    position: sticky;\n    top: 0;\n    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);\n    z-index: 10;\n    border-bottom: 1px solid #e9ecef;\n    font-size: 1.4em;\n    font-weight: 600;\n    box-shadow: 0 2px 10px rgba(0,0,0,0.05);\n}\n\n/* Scrollable content area */\n.species-content {\n    height: calc(100% - 85px);\n    overflow-y: auto;\n    padding: 20px;\n}\n\n/* Individual species cards */\n.species-card {\n    background: white;\n    margin-bottom: 16px;\n    padding: 24px;\n    border-radius: 12px;\n    border-left: 5px solid #e74c3c;\n    box-shadow: 0 2px 12px rgba(0,0,0,0.08);\n    transition: all 0.3s ease;\n    border: 1px solid #f1f3f4;\n}\n\n.species-card:hover {\n    transform: translateY(-2px);\n    box-shadow: 0 6px 25px rgba(0,0,0,0.12);\n    border-left-color: #c0392b;\n}\n\n/* Card header with species info */\n.species-info {\n    display: flex;\n    justify-content: space-between;\n    align-items: flex-start;\n    margin-bottom: 16px;\n}\n\n.species-details {\n    flex: 1;\n    margin-right: 20px;\n}\n\n.species-name {\n    font-weight: 700;\n    color: #2c3e50;\n    margin-bottom: 8px;\n    font-size: 1.2em;\n    line-height: 1.3;\n}\n\n.species-scientific {\n    font-style: italic;\n    color: #6c757d;\n    margin-bottom: 12px;\n    font-size: 1em;\n    line-height: 1.4;\n}\n\n/* Count badge */\n.species-count {\n    background: linear-gradient(45deg, #e74c3c, #c0392b);\n    color: white;\n    padding: 10px 16px;\n    border-radius: 25px;\n    font-size: 0.9em;\n    font-weight: 600;\n    white-space: nowrap;\n    box-shadow: 0 3px 12px rgba(231,76,60,0.25);\n}\n\n/* Date info */\n.species-date {\n    color: #868e96;\n    font-size: 0.95em;\n    display: flex;\n    align-items: center;\n    margin-top: 4px;\n}\n\n.species-date-icon {\n    margin-right: 8px;\n    opacity: 0.7;\n}\n\n/* Empty state */\n.empty-state {\n    text-align: center;\n    color: #6c757d;\n    padding: 80px 20px;\n}\n\n.empty-icon {\n    font-size: 4em;\n    margin-bottom: 20px;\n    opacity: 0.3;\n}\n\n.empty-text {\n    font-family: Arial, sans-serif;\n    font-size: 1.1em;\n    line-height: 1.6;\n    color: #495057;\n}\n</style>\n\n<div class=\"species-container\">\n    <h4 class=\"species-header\">Zeldzame Soorten in de Provincie</h4>\n    \n    <div class=\"species-content\">\n        <div ng-repeat=\"item in msg.payload\" class=\"species-card\">\n            <div class=\"species-info\">\n                <div class=\"species-details\">\n                    <div class=\"species-name\">{{item.soort}}</div>\n                    <div ng-if=\"item.wetenschappelijk\" class=\"species-scientific\">{{item.wetenschappelijk}}</div>\n                </div>\n                <div class=\"species-count\">{{item.aantal}} waarnemingen</div>\n            </div>\n            <div class=\"species-date\">\n                <span class=\"species-date-icon\">📅</span>\n                Laatst gezien: {{item.datum}}\n            </div>\n        </div>\n        \n        <div ng-if=\"!msg.payload || msg.payload.length === 0\" class=\"empty-state\">\n            <p class=\"empty-text\">Klik op 'Laad Biodiversiteit Data' om de zeldzame soorten te bekijken</p>\n        </div>\n    </div>\n</div>",
+        "height": 12,
+        "format": "<style>\n.nr-dashboard-template {\n    padding: 0 !important;\n    margin: 0 !important;\n    background: transparent !important;\n    box-shadow: none !important;\n    border: none !important;\n}\n\n.nr-dashboard-template .nr-dashboard-template-body {\n    padding: 0 !important;\n    margin: 0 !important;\n}\n\n.species-container {\n    width: 100%;\n    height: 100%;\n    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);\n    border-radius: 15px;\n    overflow: hidden;\n    box-shadow: 0 8px 32px rgba(0,0,0,0.1);\n    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;\n}\n\n.species-header {\n    margin: 0;\n    padding: 25px;\n    color: white;\n    background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);\n    font-size: 1.4em;\n    font-weight: 600;\n    box-shadow: 0 4px 20px rgba(231,76,60,0.3);\n    text-align: center;\n}\n\n.species-content {\n    height: calc(100% - 85px);\n    overflow-y: auto;\n    padding: 20px;\n}\n\n.species-card {\n    background: white;\n    margin-bottom: 16px;\n    padding: 24px;\n    border-radius: 12px;\n    border-left: 5px solid #e74c3c;\n    box-shadow: 0 4px 20px rgba(0,0,0,0.08);\n    transition: all 0.3s ease;\n    border: 1px solid #f1f3f4;\n}\n\n.species-card:hover {\n    transform: translateY(-2px);\n    box-shadow: 0 8px 30px rgba(0,0,0,0.15);\n    border-left-color: #c0392b;\n}\n\n.species-info {\n    display: flex;\n    justify-content: space-between;\n    align-items: flex-start;\n    margin-bottom: 16px;\n}\n\n.species-details {\n    flex: 1;\n    margin-right: 20px;\n}\n\n.species-name {\n    font-weight: 700;\n    color: #2c3e50;\n    margin-bottom: 8px;\n    font-size: 1.2em;\n    line-height: 1.3;\n}\n\n.species-scientific {\n    font-style: italic;\n    color: #6c757d;\n    margin-bottom: 12px;\n    font-size: 1em;\n    line-height: 1.4;\n}\n\n.species-count {\n    background: linear-gradient(45deg, #e74c3c, #c0392b);\n    color: white;\n    padding: 10px 16px;\n    border-radius: 25px;\n    font-size: 0.9em;\n    font-weight: 600;\n    white-space: nowrap;\n    box-shadow: 0 3px 12px rgba(231,76,60,0.25);\n}\n\n.species-date {\n    color: #868e96;\n    font-size: 0.95em;\n    display: flex;\n    align-items: center;\n    margin-top: 4px;\n}\n\n.species-date-icon {\n    margin-right: 8px;\n    opacity: 0.7;\n}\n\n.empty-state {\n    text-align: center;\n    color: #6c757d;\n    padding: 80px 20px;\n}\n\n.empty-text {\n    font-family: Arial, sans-serif;\n    font-size: 1.1em;\n    line-height: 1.6;\n    color: #495057;\n}\n\n.stats-summary {\n    background: white;\n    border-radius: 12px;\n    padding: 20px;\n    margin-bottom: 20px;\n    box-shadow: 0 4px 20px rgba(0,0,0,0.08);\n    border-left: 5px solid #3498db;\n}\n\n.stats-row {\n    display: flex;\n    justify-content: space-between;\n    margin-bottom: 10px;\n}\n\n.stats-label {\n    font-weight: 600;\n    color: #2c3e50;\n}\n\n.stats-value {\n    color: #27ae60;\n    font-weight: 700;\n}\n</style>\n\n<div class=\"species-container\">\n    <h4 class=\"species-header\">Zeldzame Soorten in de Provincie</h4>\n    \n    <div class=\"species-content\">\n        <div ng-if=\"msg.payload && msg.payload.length > 0\">\n            <div class=\"stats-summary\">\n                <div class=\"stats-row\">\n                    <span class=\"stats-label\">Aantal zeldzame soorten:</span>\n                    <span class=\"stats-value\">{{msg.payload.length}}</span>\n                </div>\n                <div class=\"stats-row\">\n                    <span class=\"stats-label\">Minste waarnemingen:</span>\n                    <span class=\"stats-value\">{{msg.payload[0].aantal}}</span>\n                </div>\n                <div class=\"stats-row\">\n                    <span class=\"stats-label\">Meeste waarnemingen (van zeldzame):</span>\n                    <span class=\"stats-value\">{{msg.payload[msg.payload.length-1].aantal}}</span>\n                </div>\n            </div>\n        </div>\n        \n        <div ng-repeat=\"item in msg.payload\" class=\"species-card\">\n            <div class=\"species-info\">\n                <div class=\"species-details\">\n                    <div class=\"species-name\">{{item.soort}}</div>\n                    <div ng-if=\"item.wetenschappelijk\" class=\"species-scientific\">{{item.wetenschappelijk}}</div>\n                </div>\n                <div class=\"species-count\">{{item.aantal}} waarnemingen</div>\n            </div>\n            <div class=\"species-date\">\n                \n                Laatst gezien: {{item.datum}}\n            </div>\n        </div>\n        \n        <div ng-if=\"!msg.payload || msg.payload.length === 0\" class=\"empty-state\">\n            <p class=\"empty-text\">Klik op 'Laad Biodiversiteit Data' om de zeldzame soorten te bekijken</p>\n        </div>\n    </div>\n</div>",
         "storeOutMessages": true,
         "fwdInMessages": true,
         "resendOnRefresh": true,
         "templateScope": "local",
         "className": "",
-        "x": 750,
-        "y": 140,
+        "x": 790,
+        "y": 120,
         "wires": [
             []
         ]
     },
     {
-        "id": "26448838c8139871",
+        "id": "915f4127d5ce4a84",
         "type": "ui_button",
-        "z": "ea8b5619ae5b3556",
-        "name": "Load Map",
-        "group": "c9b6f59a886ecad2",
-        "order": 1,
-        "width": 12,
+        "z": "7100982d56dc1786",
+        "name": "",
+        "group": "2cad3c5fbf8242da",
+        "order": 3,
+        "width": 4,
         "height": 1,
         "passthru": false,
-        "label": "🗺️ Laad Observatiekaart",
-        "tooltip": "Laadt de Folium waarnemingen kaart",
+        "label": "Bramensprinkhaan",
+        "tooltip": "",
         "color": "white",
-        "bgcolor": "#27ae60",
-        "icon": "map",
-        "payload": "",
+        "bgcolor": "#3498db",
+        "className": "",
+        "icon": "",
+        "payload": "Bramensprinkhaan",
         "payloadType": "str",
-        "topic": "",
-        "x": 150,
-        "y": 250,
+        "topic": "quick_select",
+        "topicType": "str",
+        "x": 140,
+        "y": 320,
         "wires": [
             [
-                "904afeb85129be29"
+                "32dd94564b0564e7"
             ]
         ]
     },
     {
-        "id": "904afeb85129be29",
-        "type": "file in",
-        "z": "ea8b5619ae5b3556",
-        "name": "Read HTML",
-        "filename": "data/25-05-2025.html",
-        "format": "utf8",
-        "chunk": false,
-        "sendError": false,
-        "encoding": "none",
-        "x": 350,
-        "y": 250,
+        "id": "a8811aad6984a30e",
+        "type": "ui_button",
+        "z": "7100982d56dc1786",
+        "name": "",
+        "group": "2cad3c5fbf8242da",
+        "order": 4,
+        "width": 4,
+        "height": 1,
+        "passthru": false,
+        "label": "Veldkrekel",
+        "tooltip": "",
+        "color": "white",
+        "bgcolor": "#3498db",
+        "className": "",
+        "icon": "",
+        "payload": "Veldkrekel",
+        "payloadType": "str",
+        "topic": "quick_select",
+        "topicType": "str",
+        "x": 140,
+        "y": 380,
         "wires": [
             [
-                "095ecc58dde3afed"
+                "32dd94564b0564e7"
             ]
         ]
     },
     {
-        "id": "095ecc58dde3afed",
+        "id": "820adc86bd1b3d5d",
+        "type": "ui_button",
+        "z": "7100982d56dc1786",
+        "name": "",
+        "group": "2cad3c5fbf8242da",
+        "order": 5,
+        "width": 4,
+        "height": 1,
+        "passthru": false,
+        "label": "Huiskrekel",
+        "tooltip": "",
+        "color": "white",
+        "bgcolor": "#3498db",
+        "className": "",
+        "icon": "",
+        "payload": "Huiskrekel",
+        "payloadType": "str",
+        "topic": "quick_select",
+        "topicType": "str",
+        "x": 140,
+        "y": 440,
+        "wires": [
+            [
+                "32dd94564b0564e7"
+            ]
+        ]
+    },
+    {
+        "id": "32dd94564b0564e7",
+        "type": "function",
+        "z": "7100982d56dc1786",
+        "name": "Species Data Processor",
+        "func": "// Database met soortinformatie\nvar speciesDatabase = {\n    'Bramensprinkhaan': {\n        scientific: 'Pholidoptera griseoaptera',\n        status: 'Algemeen',\n        habitat: 'Struikgewas, bosranden, tuinen',\n        activity: 'Avond en nacht actief',\n        sound: 'Zachte trillende roep',\n        size: '12-18 mm',\n        observations: 156,\n        lastSeen: '2024-04-15',\n        months: [0, 2, 8, 25, 45, 78, 89, 92, 67, 34, 12, 1],\n        description: 'Een middelgrote langsprietsprinkhaan met grijsbruine kleur. Vrouwtjes hebben een opvallende legboor.',\n        threats: 'Verlies van struikgewas en bosranden',\n        conservation: 'Niet bedreigd'\n    },\n    'Veldkrekel': {\n        scientific: 'Gryllus campestris',\n        status: 'Zeldzaam',\n        habitat: 'Droge graslanden, heide',\n        activity: 'Dag en avond actief',\n        sound: 'Heldere fluitende roep',\n        size: '15-25 mm',\n        observations: 23,\n        lastSeen: '2024-04-08',\n        months: [0, 0, 5, 18, 45, 67, 78, 45, 23, 8, 2, 0],\n        description: 'Grote zwarte krekel met krachtige achterpoten. Graaft diepe gangen in de grond.',\n        threats: 'Intensieve landbouw, bebouwing',\n        conservation: 'Kwetsbaar'\n    },\n    'Huiskrekel': {\n        scientific: 'Acheta domesticus',\n        status: 'Algemeen',\n        habitat: 'Gebouwen, kassen, warme plekken',\n        activity: 'Nachtactief',\n        sound: 'Continu tjirpen',\n        size: '16-20 mm',\n        observations: 89,\n        lastSeen: '2024-04-20',\n        months: [15, 18, 22, 28, 35, 42, 48, 45, 38, 32, 25, 18],\n        description: 'Lichtbruine krekel die het hele jaar door actief is in verwarmde gebouwen.',\n        threats: 'Geen directe bedreigingen',\n        conservation: 'Niet bedreigd'\n    },\n    'Grote groene sabelsprinkhaan': {\n        scientific: 'Tettigonia viridissima',\n        status: 'Algemeen',\n        habitat: 'Bossen, struikgewas, tuinen',\n        activity: 'Avond en nacht actief',\n        sound: 'Luid zoemend geluid',\n        size: '28-42 mm',\n        observations: 134,\n        lastSeen: '2024-04-18',\n        months: [0, 0, 2, 12, 35, 67, 89, 95, 78, 45, 15, 0],\n        description: 'Grote groene springhaan met lange antennes en krachtige kaken. Goede vlieger.',\n        threats: 'Habitatverlies door bebouwing',\n        conservation: 'Niet bedreigd'\n    },\n    'Gewone sprinkhaan': {\n        scientific: 'Chorthippus brunneus',\n        status: 'Zeer algemeen',\n        habitat: 'Graslanden, weilanden, wegbermen',\n        activity: 'Overdag actief',\n        sound: 'Kort ratelend geluid',\n        size: '15-22 mm',\n        observations: 287,\n        lastSeen: '2024-04-22',\n        months: [0, 0, 8, 25, 56, 78, 92, 89, 67, 34, 12, 2],\n        description: 'Bruine kortsprietsprinkhaan die vaak in grote aantallen voorkomt in grasland.',\n        threats: 'Intensief graslandbeheer',\n        conservation: 'Niet bedreigd'\n    },\n    'Boomkrekel': {\n        scientific: 'Oecanthus pellucens',\n        status: 'Vrij zeldzaam',\n        habitat: 'Struiken, bomen, klimplanten',\n        activity: 'Nachtactief',\n        sound: 'Zacht melodieus tjirpen',\n        size: '10-15 mm',\n        observations: 41,\n        lastSeen: '2024-04-12',\n        months: [0, 0, 0, 8, 25, 45, 67, 78, 56, 23, 5, 0],\n        description: 'Kleine, lichtgekleurde krekel die leeft in de vegetatie. Zeer gevoelig voor temperatuur.',\n        threats: 'Klimaatverandering, habitatverlies',\n        conservation: 'Gevoelig'\n    }\n};\n\nvar speciesName = null;\n\n// Als het een directe knop is (quick_select)\nif (msg.topic === 'quick_select') {\n    speciesName = msg.payload;\n    context.set('lastSpeciesInput', speciesName);\n}\n// Als het de zoekknop is\nelse if (msg.topic === 'search_button') {\n    // Haal de ingevoerde tekst uit de context (van het tekstveld)\n    var inputText = context.get('species_input_text');\n    if (inputText) {\n        speciesName = inputText;\n        context.set('lastSpeciesInput', speciesName);\n    }\n}\n// Als het het tekstveld is (opslaan in context)\nelse if (msg.topic === 'species_input') {\n    context.set('species_input_text', msg.payload);\n    return null; // Stuur niets door, wacht op zoekknop\n}\n\n// Als er geen soort is geselecteerd\nif (!speciesName) {\n    return {speciesName: null, speciesData: null, payload: null};\n}\n\n// Zoek de soort in de database\nvar foundSpecies = null;\nvar searchName = speciesName.toLowerCase();\n\n// Exacte match\nfor (var key in speciesDatabase) {\n    if (key.toLowerCase() === searchName) {\n        foundSpecies = key;\n        break;\n    }\n}\n\n// Gedeeltelijke match als exacte match niet gevonden\nif (!foundSpecies) {\n    for (var key in speciesDatabase) {\n        if (key.toLowerCase().includes(searchName) || searchName.includes(key.toLowerCase())) {\n            foundSpecies = key;\n            break;\n        }\n    }\n}\n\n// Resultaat samenstellen\nvar speciesData;\nif (foundSpecies) {\n    speciesData = speciesDatabase[foundSpecies];\n    speciesName = foundSpecies;\n} else {\n    speciesData = {\n        scientific: 'Onbekend',\n        status: 'Onbekend',\n        habitat: 'Geen informatie beschikbaar',\n        activity: 'Onbekend',\n        sound: 'Geen informatie',\n        size: 'Onbekend',\n        observations: 0,\n        lastSeen: 'Onbekend',\n        months: [0,0,0,0,0,0,0,0,0,0,0,0],\n        description: 'Geen beschrijving beschikbaar voor \"' + speciesName + '\". Probeer: Bramensprinkhaan, Veldkrekel, Huiskrekel, Grote groene sabelsprinkhaan, Gewone sprinkhaan, of Boomkrekel.',\n        threats: 'Onbekend',\n        conservation: 'Onbekend'\n    };\n}\n\nreturn {\n    speciesName: speciesName,\n    speciesData: speciesData,\n    payload: speciesData\n};",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 400,
+        "y": 380,
+        "wires": [
+            [
+                "f2e59fdac6cc83bf"
+            ]
+        ]
+    },
+    {
+        "id": "f2e59fdac6cc83bf",
         "type": "ui_template",
-        "z": "ea8b5619ae5b3556",
-        "group": "832f5032728accb9",
-        "name": "Display Kaart",
+        "z": "7100982d56dc1786",
+        "group": "b6f97192dcfaab52",
+        "name": "Interactive Species Explorer",
         "order": 1,
         "width": 12,
-        "height": 14,
-        "format": "<div style=\"padding: 15px;\"><h3 style=\"margin-top: 0; color: #2c3e50;\">🗺️ Observatiekaart - Waarnemingen Visualisatie</h3><p style=\"color: #7f8c8d; margin-bottom: 20px;\">Geografische verspreiding van sprinkhanen en krekels waarnemingen</p><div style=\"width: 100%; height: 600px; border: 2px solid #ddd; border-radius: 10px; overflow: hidden; background: #f8f9fa;\"><iframe srcdoc=\"{{msg.payload}}\" width=\"100%\" height=\"600\" style=\"border: none;\"></iframe></div></div>",
+        "height": 18,
+        "format": "<style>\n.species-explorer {\n    width: 100%;\n    height: 100%;\n    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);\n    border-radius: 20px;\n    overflow: hidden;\n    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;\n    color: white;\n    position: relative;\n}\n\n.explorer-header {\n    background: rgba(255,255,255,0.1);\n    backdrop-filter: blur(10px);\n    padding: 25px;\n    text-align: center;\n    border-bottom: 1px solid rgba(255,255,255,0.2);\n}\n\n.species-title {\n    font-size: 2.2em;\n    font-weight: 700;\n    margin: 0 0 10px 0;\n    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);\n}\n\n.species-scientific {\n    font-size: 1.2em;\n    font-style: italic;\n    opacity: 0.9;\n    margin-bottom: 15px;\n}\n\n.status-badge {\n    display: inline-block;\n    padding: 8px 20px;\n    border-radius: 25px;\n    font-weight: 600;\n    font-size: 0.9em;\n    text-transform: uppercase;\n    letter-spacing: 1px;\n    box-shadow: 0 4px 15px rgba(0,0,0,0.2);\n}\n\n.status-algemeen { background: linear-gradient(45deg, #27ae60, #2ecc71); }\n.status-zeldzaam { background: linear-gradient(45deg, #f39c12, #e67e22); }\n.status-zeer-algemeen { background: linear-gradient(45deg, #16a085, #1abc9c); }\n.status-vrij-zeldzaam { background: linear-gradient(45deg, #e74c3c, #c0392b); }\n.status-onbekend { background: linear-gradient(45deg, #95a5a6, #7f8c8d); }\n\n.explorer-content {\n    padding: 30px;\n    height: 700px;\n    overflow-y: auto;\n}\n\n.info-grid {\n    display: grid;\n    grid-template-columns: 1fr 1fr;\n    gap: 25px;\n    margin-bottom: 30px;\n}\n\n.info-card {\n    background: rgba(255,255,255,0.15);\n    backdrop-filter: blur(10px);\n    border-radius: 15px;\n    padding: 20px;\n    border: 1px solid rgba(255,255,255,0.2);\n    transition: all 0.3s ease;\n}\n\n.info-card:hover {\n    background: rgba(255,255,255,0.25);\n    transform: translateY(-2px);\n    box-shadow: 0 8px 25px rgba(0,0,0,0.2);\n}\n\n.card-icon {\n    font-size: 2em;\n    margin-bottom: 10px;\n    display: block;\n}\n\n.card-title {\n    font-weight: 600;\n    margin-bottom: 8px;\n    font-size: 1.1em;\n    text-transform: uppercase;\n    letter-spacing: 0.5px;\n}\n\n.card-value {\n    font-size: 1em;\n    line-height: 1.4;\n    opacity: 0.95;\n}\n\n.chart-container {\n    background: rgba(255,255,255,0.15);\n    backdrop-filter: blur(10px);\n    border-radius: 15px;\n    padding: 25px;\n    margin-bottom: 25px;\n    border: 1px solid rgba(255,255,255,0.2);\n}\n\n.chart-title {\n    font-size: 1.3em;\n    font-weight: 600;\n    margin-bottom: 20px;\n    text-align: center;\n    text-transform: uppercase;\n    letter-spacing: 1px;\n}\n\n.month-chart {\n    display: flex;\n    align-items: end;\n    justify-content: space-between;\n    height: 120px;\n    margin: 20px 0;\n    padding: 0 10px;\n}\n\n.month-bar {\n    background: linear-gradient(180deg, #fff 0%, rgba(255,255,255,0.7) 100%);\n    width: 20px;\n    margin: 0 2px;\n    border-radius: 3px 3px 0 0;\n    position: relative;\n    transition: all 0.3s ease;\n    cursor: pointer;\n}\n\n.month-bar:hover {\n    background: linear-gradient(180deg, #f1c40f 0%, #f39c12 100%);\n    transform: scale(1.1);\n}\n\n.month-label {\n    position: absolute;\n    bottom: -25px;\n    left: 50%;\n    transform: translateX(-50%);\n    font-size: 0.8em;\n    white-space: nowrap;\n    font-weight: 500;\n}\n\n.month-value {\n    position: absolute;\n    top: -25px;\n    left: 50%;\n    transform: translateX(-50%);\n    font-size: 0.7em;\n    background: rgba(0,0,0,0.7);\n    padding: 2px 6px;\n    border-radius: 4px;\n    opacity: 0;\n    transition: opacity 0.3s ease;\n}\n\n.month-bar:hover .month-value {\n    opacity: 1;\n}\n\n.description-section {\n    height: 220px;\n    background: rgba(255,255,255,0.15);\n    backdrop-filter: blur(10px);\n    border-radius: 15px;\n    padding: 25px;\n    border: 1px solid rgba(255,255,255,0.2);\n}\n\n.section-title {\n    font-size: 1.3em;\n    font-weight: 600;\n    margin-bottom: 15px;\n    display: flex;\n    align-items: center;\n    gap: 10px;\n}\n\n.description-text {\n    line-height: 1.6;\n    margin-bottom: 20px;\n    font-size: 1em;\n}\n\n.conservation-info {\n    display: grid;\n    grid-template-columns: 1fr 1fr;\n    gap: 15px;\n    margin-top: 20px;\n}\n\n.conservation-item {\n    background: rgba(0,0,0,0.2);\n    padding: 15px;\n    border-radius: 10px;\n    border-left: 4px solid #f1c40f;\n}\n\n.conservation-label {\n    font-weight: 600;\n    font-size: 0.9em;\n    text-transform: uppercase;\n    letter-spacing: 0.5px;\n    margin-bottom: 5px;\n}\n\n.conservation-value {\n    font-size: 0.95em;\n    line-height: 1.4;\n}\n\n.no-data {\n    text-align: center;\n    padding: 60px 20px;\n    opacity: 0.8;\n}\n\n.no-data-icon {\n    font-size: 4em;\n    margin-bottom: 20px;\n    opacity: 0.6;\n}\n\n@media (max-width: 768px) {\n    .info-grid {\n        grid-template-columns: 1fr;\n    }\n    \n    .conservation-info {\n        grid-template-columns: 1fr;\n    }\n    \n    .month-chart {\n        height: 80px;\n    }\n    \n    .month-bar {\n        width: 15px;\n    }\n}\n</style>\n\n<div class=\"species-explorer\">\n    <div class=\"explorer-header\">\n        <h1 class=\"species-title\" ng-if=\"msg.speciesName\">{{msg.speciesName}}</h1>\n        <h1 class=\"species-title\" ng-if=\"!msg.speciesName\">Selecteer een soort</h1>\n        \n        <div ng-if=\"msg.speciesData\">\n            <p class=\"species-scientific\">{{msg.speciesData.scientific}}</p>\n            <span class=\"status-badge\" \n                  ng-class=\"{\n                      'status-algemeen': msg.speciesData.status === 'Algemeen',\n                      'status-zeldzaam': msg.speciesData.status === 'Zeldzaam', \n                      'status-zeer-algemeen': msg.speciesData.status === 'Zeer algemeen',\n                      'status-vrij-zeldzaam': msg.speciesData.status === 'Vrij zeldzaam',\n                      'status-onbekend': msg.speciesData.status === 'Onbekend'\n                  }\">\n                {{msg.speciesData.status}}\n            </span>\n        </div>\n    </div>\n    \n    <div class=\"explorer-content\" ng-if=\"msg.speciesData\">\n        <!-- Basis informatie grid -->\n        <div class=\"info-grid\">\n            <div class=\"info-card\">\n                <span class=\"card-icon\">🏠</span>\n                <div class=\"card-title\">Habitat</div>\n                <div class=\"card-value\">{{msg.speciesData.habitat}}</div>\n            </div>\n            \n            <div class=\"info-card\">\n                <span class=\"card-icon\">🕐</span>\n                <div class=\"card-title\">Activiteit</div>\n                <div class=\"card-value\">{{msg.speciesData.activity}}</div>\n            </div>\n            \n            <div class=\"info-card\">\n                <span class=\"card-icon\">🔊</span>\n                <div class=\"card-title\">Geluid</div>\n                <div class=\"card-value\">{{msg.speciesData.sound}}</div>\n            </div>\n            \n            <div class=\"info-card\">\n                <span class=\"card-icon\">📏</span>\n                <div class=\"card-title\">Grootte</div>\n                <div class=\"card-value\">{{msg.speciesData.size}}</div>\n            </div>\n            \n            <div class=\"info-card\">\n                <span class=\"card-icon\">👁️</span>\n                <div class=\"card-title\">Waarnemingen</div>\n                <div class=\"card-value\">{{msg.speciesData.observations}} dit jaar</div>\n            </div>\n            \n            <div class=\"info-card\">\n                <span class=\"card-icon\">📅</span>\n                <div class=\"card-title\">Laatste waarneming</div>\n                <div class=\"card-value\">{{msg.speciesData.lastSeen}}</div>\n            </div>\n        </div>\n        \n        <!-- Seizoenspatroon grafiek -->\n        <div class=\"chart-container\">\n            <div class=\"chart-title\">📊 Seizoenspatroon Waarnemingen</div>\n            <div class=\"month-chart\">\n                <div class=\"month-bar\" \n                     ng-repeat=\"count in msg.speciesData.months track by $index\"\n                     ng-style=\"{height: (count/100*100) + '%'}\">\n                    <div class=\"month-value\">{{count}}</div>\n                    <div class=\"month-label\">{{['Jan','Feb','Mrt','Apr','Mei','Jun','Jul','Aug','Sep','Okt','Nov','Dec'][$index]}}</div>\n                </div>\n            </div>\n            <p style=\"text-align: center; opacity: 0.8; font-size: 0.9em; margin-top: 30px;\">\n                Hover over de balken om exacte aantallen te zien\n            </p>\n        </div>\n        \n        <!-- Beschrijving en conservatie -->\n        <div class=\"description-section\">\n            <div class=\"section-title\">\n                <span>📖</span>\n                Beschrijving\n            </div>\n            <p class=\"description-text\">{{msg.speciesData.description}}</p>\n            \n            <div class=\"conservation-info\">\n                <div class=\"conservation-item\">\n                    <div class=\"conservation-label\">⚠️ Bedreigingen</div>\n                    <div class=\"conservation-value\">{{msg.speciesData.threats}}</div>\n                </div>\n                \n                <div class=\"conservation-item\">\n                    <div class=\"conservation-label\">🛡️ Beschermingsstatus</div>\n                    <div class=\"conservation-value\">{{msg.speciesData.conservation}}</div>\n                </div>\n            </div>\n        </div>\n    </div>\n    \n    <div class=\"no-data\" ng-if=\"!msg.speciesData\">\n        <div class=\"no-data-icon\">🦗</div>\n        <p>Selecteer een soort om gedetailleerde informatie te bekijken</p>\n    </div>\n</div>",
         "storeOutMessages": true,
         "fwdInMessages": true,
         "resendOnRefresh": true,
         "templateScope": "local",
-        "x": 550,
-        "y": 250,
-        "wires": [
-            []
-        ]
-    },
-    {
-        "id": "393b10dcf20e0b42",
-        "type": "ui_chart",
-        "z": "ea8b5619ae5b3556",
-        "name": "Soortenrijkdom Chart 2",
-        "group": "04644e41071ad5cc",
-        "order": 1,
-        "width": "0",
-        "height": "0",
-        "label": "Meest Waargenomen Soorten",
-        "chartType": "bar",
-        "legend": "false",
-        "xformat": "string",
-        "interpolate": "linear",
-        "nodata": "Klik op 'Laad Biodiversiteit Data' om de grafiek te tonen",
-        "dot": false,
-        "ymin": "0",
-        "ymax": "600",
-        "removeOlder": 1,
-        "removeOlderPoints": "",
-        "removeOlderUnit": "3600",
-        "cutout": 0,
-        "useOneColor": false,
-        "useUTC": false,
-        "colors": [
-            "#e74c3c",
-            "#3498db",
-            "#2ecc71",
-            "#f39c12",
-            "#9b59b6",
-            "#1abc9c",
-            "#34495e",
-            "#e67e22",
-            "#95a5a6"
-        ],
-        "outputs": 1,
-        "useDifferentColor": false,
         "className": "",
-        "x": 770,
-        "y": 60,
+        "x": 680,
+        "y": 380,
         "wires": [
             []
         ]
@@ -278,22 +295,26 @@
         "width": "12"
     },
     {
-        "id": "c9b6f59a886ecad2",
+        "id": "2cad3c5fbf8242da",
         "type": "ui_group",
-        "name": "Kaart Besturing",
-        "tab": "bd482fd13e0f2a0a",
+        "name": "Soort Selectie & Besturing",
+        "tab": "b30a1c26b77a9b48",
         "order": 1,
         "disp": true,
-        "width": "12"
+        "width": "12",
+        "collapse": false,
+        "className": ""
     },
     {
-        "id": "832f5032728accb9",
+        "id": "b6f97192dcfaab52",
         "type": "ui_group",
-        "name": "Waarnemingen Kaart",
-        "tab": "bd482fd13e0f2a0a",
+        "name": "Interactieve Soort Explorer",
+        "tab": "b30a1c26b77a9b48",
         "order": 2,
         "disp": true,
-        "width": "12"
+        "width": "12",
+        "collapse": false,
+        "className": ""
     },
     {
         "id": "biodiv_tab",
@@ -303,10 +324,11 @@
         "order": 1
     },
     {
-        "id": "bd482fd13e0f2a0a",
+        "id": "b30a1c26b77a9b48",
         "type": "ui_tab",
-        "name": "🗺️ Observatiekaart",
-        "icon": "fa-map",
-        "order": 2
+        "name": "[SoortInfo Dashboard]",
+        "icon": "dashboard",
+        "disabled": false,
+        "hidden": false
     }
 ]
