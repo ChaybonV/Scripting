@@ -1,0 +1,312 @@
+[
+    {
+        "id": "ea8b5619ae5b3556",
+        "type": "tab",
+        "label": "NatuurSpotter Dashboard",
+        "disabled": false,
+        "info": ""
+    },
+    {
+        "id": "e6163b791bdef47a",
+        "type": "ui_button",
+        "z": "ea8b5619ae5b3556",
+        "name": "Load Biodiversity",
+        "group": "09546c12f4874d7b",
+        "order": 1,
+        "width": 12,
+        "height": 1,
+        "passthru": false,
+        "label": "Laad Biodiversiteit Data",
+        "tooltip": "CSV data laden, grafieken en tabellen tonen",
+        "color": "white",
+        "bgcolor": "#3498db",
+        "className": "",
+        "icon": "bar-chart",
+        "payload": "",
+        "payloadType": "str",
+        "topic": "",
+        "topicType": "str",
+        "x": 150,
+        "y": 100,
+        "wires": [
+            [
+                "0568ebcf6182185f"
+            ]
+        ]
+    },
+    {
+        "id": "0568ebcf6182185f",
+        "type": "file in",
+        "z": "ea8b5619ae5b3556",
+        "name": "Read CSV",
+        "filename": "data/waarnemingen_4_2024.csv",
+        "filenameType": "str",
+        "format": "utf8",
+        "chunk": false,
+        "sendError": false,
+        "encoding": "none",
+        "x": 350,
+        "y": 100,
+        "wires": [
+            [
+                "72aeab6c100a1a0d"
+            ]
+        ]
+    },
+    {
+        "id": "72aeab6c100a1a0d",
+        "type": "function",
+        "z": "ea8b5619ae5b3556",
+        "name": "Process Data",
+        "func": "var lines = msg.payload.split('\\n').filter(line => line.trim());\nvar data = [];\nfor (var i = 1; i < lines.length; i++) {\n\tvar cols = lines[i].split(';');\n\tif (cols.length >= 3) {\n\t\tvar nameparts = cols[0].split(' - ');\n\t\tvar soort = nameparts[0].trim();\n\t\tvar wetenschappelijk = nameparts[1] ? nameparts[1].trim() : '';\n\t\tvar aantal = parseInt(cols[1]) || 0;\n\t\tvar datum = cols[2].trim();\n\t\tdata.push({soort: soort, wetenschappelijk: wetenschappelijk, aantal: aantal, datum: datum});\n\t}\n}\nvar sortedHigh = data.slice().sort((a, b) => b.aantal - a.aantal);\nvar topSoorten = sortedHigh.slice(0, 10);\nvar chartMsgs = [];\nfor (var i = 0; i < topSoorten.length; i++) {\n\tchartMsgs.push({payload: topSoorten[i].aantal, topic: topSoorten[i].soort});\n}\nvar sortedLow = data.slice().sort((a, b) => a.aantal - b.aantal);\nvar zeldzameSoorten = sortedLow.slice(0, 10);\nfor (var j = 0; j < chartMsgs.length; j++) {\n\tnode.send([chartMsgs[j], null]);\n}\nreturn [null, {payload: zeldzameSoorten, topic: 'table'}];",
+        "outputs": 2,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 550,
+        "y": 100,
+        "wires": [
+            [
+                "d8a0f965b39f6ddd",
+                "393b10dcf20e0b42"
+            ],
+            [
+                "c96f0e2a34bf9516"
+            ]
+        ]
+    },
+    {
+        "id": "d8a0f965b39f6ddd",
+        "type": "ui_chart",
+        "z": "ea8b5619ae5b3556",
+        "name": "Soortenrijkdom Chart",
+        "group": "04644e41071ad5cc",
+        "order": 1,
+        "width": "0",
+        "height": "0",
+        "label": "Meest Waargenomen Soorten",
+        "chartType": "horizontalBar",
+        "legend": "false",
+        "xformat": "string",
+        "interpolate": "linear",
+        "nodata": "Klik op 'Laad Biodiversiteit Data' om de grafiek te tonen",
+        "dot": false,
+        "ymin": "0",
+        "ymax": "600",
+        "removeOlder": 1,
+        "removeOlderPoints": "",
+        "removeOlderUnit": "3600",
+        "cutout": 0,
+        "useOneColor": false,
+        "useUTC": false,
+        "colors": [
+            "#e74c3c",
+            "#3498db",
+            "#2ecc71",
+            "#f39c12",
+            "#9b59b6",
+            "#1abc9c",
+            "#34495e",
+            "#e67e22",
+            "#95a5a6"
+        ],
+        "outputs": 1,
+        "useDifferentColor": false,
+        "className": "",
+        "x": 760,
+        "y": 100,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "c96f0e2a34bf9516",
+        "type": "ui_template",
+        "z": "ea8b5619ae5b3556",
+        "group": "4654b640b7594b1f",
+        "name": "Zeldzame Soorten",
+        "order": 1,
+        "width": 12,
+        "height": 16,
+        "format": "<style>\n/* Override Node-RED default styling */\n.nr-dashboard-template {\n    padding: 0 !important;\n    margin: 0 !important;\n    background: transparent !important;\n    box-shadow: none !important;\n    border: none !important;\n}\n\n.nr-dashboard-template .nr-dashboard-template-body {\n    padding: 0 !important;\n    margin: 0 !important;\n}\n\n/* Main container */\n.species-container {\n    width: 100%;\n    height: 100%;\n    background: #f8f9fa;\n    border-radius: 12px;\n    overflow: hidden;\n    box-shadow: 0 4px 20px rgba(0,0,0,0.08);\n}\n\n/* Sticky header */\n.species-header {\n    margin: 0;\n    padding: 25px;\n    color: #2c3e50;\n    position: sticky;\n    top: 0;\n    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);\n    z-index: 10;\n    border-bottom: 1px solid #e9ecef;\n    font-size: 1.4em;\n    font-weight: 600;\n    box-shadow: 0 2px 10px rgba(0,0,0,0.05);\n}\n\n/* Scrollable content area */\n.species-content {\n    height: calc(100% - 85px);\n    overflow-y: auto;\n    padding: 20px;\n}\n\n/* Individual species cards */\n.species-card {\n    background: white;\n    margin-bottom: 16px;\n    padding: 24px;\n    border-radius: 12px;\n    border-left: 5px solid #e74c3c;\n    box-shadow: 0 2px 12px rgba(0,0,0,0.08);\n    transition: all 0.3s ease;\n    border: 1px solid #f1f3f4;\n}\n\n.species-card:hover {\n    transform: translateY(-2px);\n    box-shadow: 0 6px 25px rgba(0,0,0,0.12);\n    border-left-color: #c0392b;\n}\n\n/* Card header with species info */\n.species-info {\n    display: flex;\n    justify-content: space-between;\n    align-items: flex-start;\n    margin-bottom: 16px;\n}\n\n.species-details {\n    flex: 1;\n    margin-right: 20px;\n}\n\n.species-name {\n    font-weight: 700;\n    color: #2c3e50;\n    margin-bottom: 8px;\n    font-size: 1.2em;\n    line-height: 1.3;\n}\n\n.species-scientific {\n    font-style: italic;\n    color: #6c757d;\n    margin-bottom: 12px;\n    font-size: 1em;\n    line-height: 1.4;\n}\n\n/* Count badge */\n.species-count {\n    background: linear-gradient(45deg, #e74c3c, #c0392b);\n    color: white;\n    padding: 10px 16px;\n    border-radius: 25px;\n    font-size: 0.9em;\n    font-weight: 600;\n    white-space: nowrap;\n    box-shadow: 0 3px 12px rgba(231,76,60,0.25);\n}\n\n/* Date info */\n.species-date {\n    color: #868e96;\n    font-size: 0.95em;\n    display: flex;\n    align-items: center;\n    margin-top: 4px;\n}\n\n.species-date-icon {\n    margin-right: 8px;\n    opacity: 0.7;\n}\n\n/* Empty state */\n.empty-state {\n    text-align: center;\n    color: #6c757d;\n    padding: 80px 20px;\n}\n\n.empty-icon {\n    font-size: 4em;\n    margin-bottom: 20px;\n    opacity: 0.3;\n}\n\n.empty-text {\n    font-family: Arial, sans-serif;\n    font-size: 1.1em;\n    line-height: 1.6;\n    color: #495057;\n}\n</style>\n\n<div class=\"species-container\">\n    <h4 class=\"species-header\">Zeldzame Soorten in de Provincie</h4>\n    \n    <div class=\"species-content\">\n        <div ng-repeat=\"item in msg.payload\" class=\"species-card\">\n            <div class=\"species-info\">\n                <div class=\"species-details\">\n                    <div class=\"species-name\">{{item.soort}}</div>\n                    <div ng-if=\"item.wetenschappelijk\" class=\"species-scientific\">{{item.wetenschappelijk}}</div>\n                </div>\n                <div class=\"species-count\">{{item.aantal}} waarnemingen</div>\n            </div>\n            <div class=\"species-date\">\n                <span class=\"species-date-icon\">📅</span>\n                Laatst gezien: {{item.datum}}\n            </div>\n        </div>\n        \n        <div ng-if=\"!msg.payload || msg.payload.length === 0\" class=\"empty-state\">\n            <p class=\"empty-text\">Klik op 'Laad Biodiversiteit Data' om de zeldzame soorten te bekijken</p>\n        </div>\n    </div>\n</div>",
+        "storeOutMessages": true,
+        "fwdInMessages": true,
+        "resendOnRefresh": true,
+        "templateScope": "local",
+        "className": "",
+        "x": 750,
+        "y": 140,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "26448838c8139871",
+        "type": "ui_button",
+        "z": "ea8b5619ae5b3556",
+        "name": "Load Map",
+        "group": "c9b6f59a886ecad2",
+        "order": 1,
+        "width": 12,
+        "height": 1,
+        "passthru": false,
+        "label": "🗺️ Laad Observatiekaart",
+        "tooltip": "Laadt de Folium waarnemingen kaart",
+        "color": "white",
+        "bgcolor": "#27ae60",
+        "icon": "map",
+        "payload": "",
+        "payloadType": "str",
+        "topic": "",
+        "x": 150,
+        "y": 250,
+        "wires": [
+            [
+                "904afeb85129be29"
+            ]
+        ]
+    },
+    {
+        "id": "904afeb85129be29",
+        "type": "file in",
+        "z": "ea8b5619ae5b3556",
+        "name": "Read HTML",
+        "filename": "data/25-05-2025.html",
+        "format": "utf8",
+        "chunk": false,
+        "sendError": false,
+        "encoding": "none",
+        "x": 350,
+        "y": 250,
+        "wires": [
+            [
+                "095ecc58dde3afed"
+            ]
+        ]
+    },
+    {
+        "id": "095ecc58dde3afed",
+        "type": "ui_template",
+        "z": "ea8b5619ae5b3556",
+        "group": "832f5032728accb9",
+        "name": "Display Kaart",
+        "order": 1,
+        "width": 12,
+        "height": 14,
+        "format": "<div style=\"padding: 15px;\"><h3 style=\"margin-top: 0; color: #2c3e50;\">🗺️ Observatiekaart - Waarnemingen Visualisatie</h3><p style=\"color: #7f8c8d; margin-bottom: 20px;\">Geografische verspreiding van sprinkhanen en krekels waarnemingen</p><div style=\"width: 100%; height: 600px; border: 2px solid #ddd; border-radius: 10px; overflow: hidden; background: #f8f9fa;\"><iframe srcdoc=\"{{msg.payload}}\" width=\"100%\" height=\"600\" style=\"border: none;\"></iframe></div></div>",
+        "storeOutMessages": true,
+        "fwdInMessages": true,
+        "resendOnRefresh": true,
+        "templateScope": "local",
+        "x": 550,
+        "y": 250,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "393b10dcf20e0b42",
+        "type": "ui_chart",
+        "z": "ea8b5619ae5b3556",
+        "name": "Soortenrijkdom Chart 2",
+        "group": "04644e41071ad5cc",
+        "order": 1,
+        "width": "0",
+        "height": "0",
+        "label": "Meest Waargenomen Soorten",
+        "chartType": "bar",
+        "legend": "false",
+        "xformat": "string",
+        "interpolate": "linear",
+        "nodata": "Klik op 'Laad Biodiversiteit Data' om de grafiek te tonen",
+        "dot": false,
+        "ymin": "0",
+        "ymax": "600",
+        "removeOlder": 1,
+        "removeOlderPoints": "",
+        "removeOlderUnit": "3600",
+        "cutout": 0,
+        "useOneColor": false,
+        "useUTC": false,
+        "colors": [
+            "#e74c3c",
+            "#3498db",
+            "#2ecc71",
+            "#f39c12",
+            "#9b59b6",
+            "#1abc9c",
+            "#34495e",
+            "#e67e22",
+            "#95a5a6"
+        ],
+        "outputs": 1,
+        "useDifferentColor": false,
+        "className": "",
+        "x": 770,
+        "y": 60,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "09546c12f4874d7b",
+        "type": "ui_group",
+        "name": "Besturing",
+        "tab": "biodiv_tab",
+        "order": 1,
+        "disp": true,
+        "width": "12"
+    },
+    {
+        "id": "04644e41071ad5cc",
+        "type": "ui_group",
+        "name": "Soortenrijkdom Grafiek",
+        "tab": "biodiv_tab",
+        "order": 3,
+        "disp": true,
+        "width": "12"
+    },
+    {
+        "id": "4654b640b7594b1f",
+        "type": "ui_group",
+        "name": "Zeldzame Soorten",
+        "tab": "biodiv_tab",
+        "order": 2,
+        "disp": true,
+        "width": "12"
+    },
+    {
+        "id": "c9b6f59a886ecad2",
+        "type": "ui_group",
+        "name": "Kaart Besturing",
+        "tab": "bd482fd13e0f2a0a",
+        "order": 1,
+        "disp": true,
+        "width": "12"
+    },
+    {
+        "id": "832f5032728accb9",
+        "type": "ui_group",
+        "name": "Waarnemingen Kaart",
+        "tab": "bd482fd13e0f2a0a",
+        "order": 2,
+        "disp": true,
+        "width": "12"
+    },
+    {
+        "id": "biodiv_tab",
+        "type": "ui_tab",
+        "name": "Biodiversiteit Dashboard",
+        "icon": "dashboard",
+        "order": 1
+    },
+    {
+        "id": "bd482fd13e0f2a0a",
+        "type": "ui_tab",
+        "name": "🗺️ Observatiekaart",
+        "icon": "fa-map",
+        "order": 2
+    }
+]

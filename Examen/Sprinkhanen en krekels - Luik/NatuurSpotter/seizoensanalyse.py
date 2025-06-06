@@ -32,9 +32,6 @@ def seizoensanalyse(soort, jaar):
     def verwerk_pagina(html):
         soup = BeautifulSoup(html, "html.parser")
         tbody = soup.find("tbody")
-        if not tbody:
-            return
-
         for rij in tbody.find_all("tr", class_=["even", "odd"]):
             kolommen = rij.find_all("td")
             if not kolommen:

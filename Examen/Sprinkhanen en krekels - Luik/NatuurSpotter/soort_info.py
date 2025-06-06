@@ -15,14 +15,14 @@ def soort_info(soort):
     zoek_soup = BeautifulSoup(zoek_resp.text, "html.parser")
 
     lijstitem = zoek_soup.find("li", class_="lead")
-    if not lijstitem:
-        print(f"Geen resultaten gevonden voor '{soort}' op waarnemingen.be")
-        return
+    # if not lijstitem:
+    #     print(f"Geen resultaten gevonden voor '{soort}' op waarnemingen.be")
+    #     return
         
     a_tag = lijstitem.find("a", href=True)
-    if not a_tag:
-        print(f"Geen link gevonden voor '{soort}' op waarnemingen.be")
-        return
+    # if not a_tag:
+    #     print(f"Geen link gevonden voor '{soort}' op waarnemingen.be")
+    #     return
         
     href = a_tag["href"]
     soort_id = href.strip("/").split("/")[-1]
@@ -36,17 +36,17 @@ def soort_info(soort):
         return
 
     beschrijving_div = soup.find("div", class_="app-content-section js-user-content")
-    beschrijving = beschrijving_div.get_text().strip() if beschrijving_div else "Geen beschrijving gevonden"
+    beschrijving = beschrijving_div.get_text().strip()
 
     latijn_tag = soup.find("i", class_="species-scientific-name")
-    latijnse_naam = latijn_tag.text.strip() if latijn_tag else "Geen latijnse naam gevonden"
+    latijnse_naam = latijn_tag.text.strip()
 
     status_span = soup.find("span", class_="hidden-sm")
-    status = status_span.text.strip() if status_span else "Geen zeldzaamheidsstatus gevonden"
+    status = status_span.text.strip()
 
     afbeelding_tag = soup.find("figure", class_="app-ratio-box-4-3 lightbox-gallery")
-    img = afbeelding_tag.find("img") if afbeelding_tag else None
-    afbeelding_url = "https://waarnemingen.be" + img["src"] if img else "Geen afbeelding gevonden"
+    img = afbeelding_tag.find("img")
+    afbeelding_url = "https://waarnemingen.be" + img["src"]
 
     vandaag = date.today()
     vorig_jaar = vandaag.replace(year=vandaag.year - 1)
@@ -63,7 +63,7 @@ def soort_info(soort):
             if len(kolommen) >= 3:
                 datum = kolommen[0].text.strip()
                 aantal_raw = kolommen[1].get_text(separator=" ").strip()
-                aantal = aantal_raw.split()[0] if aantal_raw else "Geen aantal gevonden"
+                aantal = aantal_raw.split()[0]
                 locatie = kolommen[2].text.strip()
                 observaties.append(f"{datum}   {aantal}   {locatie}")
 
@@ -73,30 +73,28 @@ def soort_info(soort):
 
     wiki_zoek_url = f"https://nl.wikipedia.org/wiki/{soort.replace(' ', '_')}"
     wiki_resp = requests.get(wiki_zoek_url)
+    wiki_soup = BeautifulSoup(wiki_resp.text, "html.parser")
     
-    if wiki_resp.status_code == 200:
-        wiki_soup = BeautifulSoup(wiki_resp.text, "html.parser")
-        
-        soort_cell = wiki_soup.find("td", class_="ta-center")
-        if soort_cell:
-            latijn_element = soort_cell.find("i")
-            if latijn_element:
-                wiki_latijnse_naam = latijn_element.find("b").text.strip() if latijn_element.find("b") else latijn_element.text.strip()
-        
-        # Haal nuttige paragraaf van Wikipedia
-        content_div = wiki_soup.find("div", class_="mw-content-ltr mw-parser-output")
-        if content_div:
-            paragraphs = content_div.find_all("p")
-            for p in paragraphs:
-                text = p.get_text().strip()
-                # Neem alleen relevante paragrafen (niet navigatie)
-                if len(text) > 100 and any(keyword in text.lower() for keyword in ['insect', 'springhaan', 'familie', 'soort', 'kleur', 'lang']):
-                    wiki_beschrijving = text.replace('\n', ' ').strip()
-                    # Beperk tot eerste 2-3 zinnen voor beknoptheid
-                    zinnen = wiki_beschrijving.split('. ')
-                    if len(zinnen) > 3:
-                        wiki_beschrijving = '. '.join(zinnen[:3]) + '.'
-                    break
+    soort_cell = wiki_soup.find("td", class_="ta-center")
+    if soort_cell:
+        latijn_element = soort_cell.find("i")
+        if latijn_element:
+            wiki_latijnse_naam = latijn_element.find("b").text.strip() if latijn_element.find("b") else latijn_element.text.strip()
+    
+    # Haal nuttige paragraaf van Wikipedia
+    content_div = wiki_soup.find("div", class_="mw-content-ltr mw-parser-output")
+    if content_div:
+        paragraphs = content_div.find_all("p")
+        for p in paragraphs:
+            text = p.get_text().strip()
+            # Neem alleen relevante paragrafen (niet navigatie)
+            if len(text) > 100 and any(keyword in text.lower() for keyword in ['springhaan', 'familie', 'soort', 'kleur', 'lang']):
+                wiki_beschrijving = text.replace('\n', ' ').strip()
+                # Beperk tot eerste 2-3 zinnen voor beknoptheid
+                zinnen = wiki_beschrijving.split('. ')
+                if len(zinnen) > 3:
+                    wiki_beschrijving = '. '.join(zinnen[:3]) + '.'
+                break
 
     if not os.path.exists("data"):
         os.makedirs("data")
