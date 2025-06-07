@@ -1,15 +1,15 @@
 [
     {
-        "id": "7100982d56dc1786",
+        "id": "3f21aa752c834eb6",
         "type": "tab",
         "label": "NatuurSpotter Dashboard",
         "disabled": false,
         "info": ""
     },
     {
-        "id": "33dd26cf96bd0389",
+        "id": "77a5c475fef99176",
         "type": "ui_button",
-        "z": "7100982d56dc1786",
+        "z": "3f21aa752c834eb6",
         "name": "Load Biodiversity",
         "group": "09546c12f4874d7b",
         "order": 1,
@@ -30,14 +30,14 @@
         "y": 100,
         "wires": [
             [
-                "e46a7378ee47e238"
+                "a6348937efb75126"
             ]
         ]
     },
     {
-        "id": "e46a7378ee47e238",
+        "id": "a6348937efb75126",
         "type": "file in",
-        "z": "7100982d56dc1786",
+        "z": "3f21aa752c834eb6",
         "name": "Read CSV",
         "filename": "data/waarnemingen_4_2024.csv",
         "filenameType": "str",
@@ -49,14 +49,14 @@
         "y": 100,
         "wires": [
             [
-                "6c911bc31dcdeed9"
+                "31f2e2e5ddb43226"
             ]
         ]
     },
     {
-        "id": "6c911bc31dcdeed9",
+        "id": "31f2e2e5ddb43226",
         "type": "function",
-        "z": "7100982d56dc1786",
+        "z": "3f21aa752c834eb6",
         "name": "Process Biodiversity Data",
         "func": "var lines = msg.payload.split('\\n').filter(line => line.trim());\nvar data = [];\n\nfor (var i = 1; i < lines.length; i++) {\n    var cols = lines[i].split(';');\n    if (cols.length >= 3) {\n        var nameparts = cols[0].split(' - ');\n        var soort = nameparts[0].trim();\n        var wetenschappelijk = nameparts[1] ? nameparts[1].trim() : '';\n        var aantal = parseInt(cols[1]) || 0;\n        var datum = cols[2].trim();\n        data.push({\n            soort: soort,\n            wetenschappelijk: wetenschappelijk,\n            aantal: aantal,\n            datum: datum\n        });\n    }\n}\n\n// Sorteer voor meest waargenomen soorten (top 10)\nvar sortedHigh = data.slice().sort((a, b) => b.aantal - a.aantal);\nvar topSoorten = sortedHigh.slice(0, 10);\n\n// Maak chart berichten\nvar chartMsgs = [];\nfor (var i = 0; i < topSoorten.length; i++) {\n    chartMsgs.push({\n        payload: topSoorten[i].aantal,\n        topic: topSoorten[i].soort\n    });\n}\n\n// Sorteer voor zeldzame soorten (laagste aantallen)\nvar sortedLow = data.slice().sort((a, b) => a.aantal - b.aantal);\nvar zeldzameSoorten = sortedLow.slice(0, 10);\n\n// Verstuur chart data\nfor (var j = 0; j < chartMsgs.length; j++) {\n    node.send([chartMsgs[j], null]);\n}\n\n// Verstuur tabel data\nreturn [null, {payload: zeldzameSoorten, topic: 'table'}];",
         "outputs": 2,
@@ -69,17 +69,17 @@
         "y": 100,
         "wires": [
             [
-                "63fe64c2ba53712d"
+                "96a6d04f0c1c526d"
             ],
             [
-                "f91f946dacdfc9d6"
+                "4ea651f4570f0a0e"
             ]
         ]
     },
     {
-        "id": "63fe64c2ba53712d",
+        "id": "96a6d04f0c1c526d",
         "type": "ui_chart",
-        "z": "7100982d56dc1786",
+        "z": "3f21aa752c834eb6",
         "name": "Soortenrijkdom Chart",
         "group": "04644e41071ad5cc",
         "order": 1,
@@ -122,9 +122,9 @@
         ]
     },
     {
-        "id": "f91f946dacdfc9d6",
+        "id": "4ea651f4570f0a0e",
         "type": "ui_template",
-        "z": "7100982d56dc1786",
+        "z": "3f21aa752c834eb6",
         "group": "4654b640b7594b1f",
         "name": "Zeldzame Soorten Tabel",
         "order": 1,
@@ -143,9 +143,9 @@
         ]
     },
     {
-        "id": "915f4127d5ce4a84",
+        "id": "6c45fab8e58b784b",
         "type": "ui_button",
-        "z": "7100982d56dc1786",
+        "z": "3f21aa752c834eb6",
         "name": "",
         "group": "2cad3c5fbf8242da",
         "order": 3,
@@ -162,18 +162,18 @@
         "payloadType": "str",
         "topic": "quick_select",
         "topicType": "str",
-        "x": 140,
-        "y": 320,
+        "x": 150,
+        "y": 220,
         "wires": [
             [
-                "32dd94564b0564e7"
+                "1e716c4fea86b5c4"
             ]
         ]
     },
     {
-        "id": "a8811aad6984a30e",
+        "id": "794cbf37f00117b8",
         "type": "ui_button",
-        "z": "7100982d56dc1786",
+        "z": "3f21aa752c834eb6",
         "name": "",
         "group": "2cad3c5fbf8242da",
         "order": 4,
@@ -190,18 +190,18 @@
         "payloadType": "str",
         "topic": "quick_select",
         "topicType": "str",
-        "x": 140,
-        "y": 380,
+        "x": 150,
+        "y": 280,
         "wires": [
             [
-                "32dd94564b0564e7"
+                "1e716c4fea86b5c4"
             ]
         ]
     },
     {
-        "id": "820adc86bd1b3d5d",
+        "id": "04d8297deed0a1b5",
         "type": "ui_button",
-        "z": "7100982d56dc1786",
+        "z": "3f21aa752c834eb6",
         "name": "",
         "group": "2cad3c5fbf8242da",
         "order": 5,
@@ -218,18 +218,18 @@
         "payloadType": "str",
         "topic": "quick_select",
         "topicType": "str",
-        "x": 140,
-        "y": 440,
+        "x": 150,
+        "y": 340,
         "wires": [
             [
-                "32dd94564b0564e7"
+                "1e716c4fea86b5c4"
             ]
         ]
     },
     {
-        "id": "32dd94564b0564e7",
+        "id": "1e716c4fea86b5c4",
         "type": "function",
-        "z": "7100982d56dc1786",
+        "z": "3f21aa752c834eb6",
         "name": "Species Data Processor",
         "func": "// Database met soortinformatie\nvar speciesDatabase = {\n    'Bramensprinkhaan': {\n        scientific: 'Pholidoptera griseoaptera',\n        status: 'Algemeen',\n        habitat: 'Struikgewas, bosranden, tuinen',\n        activity: 'Avond en nacht actief',\n        sound: 'Zachte trillende roep',\n        size: '12-18 mm',\n        observations: 156,\n        lastSeen: '2024-04-15',\n        months: [0, 2, 8, 25, 45, 78, 89, 92, 67, 34, 12, 1],\n        description: 'Een middelgrote langsprietsprinkhaan met grijsbruine kleur. Vrouwtjes hebben een opvallende legboor.',\n        threats: 'Verlies van struikgewas en bosranden',\n        conservation: 'Niet bedreigd'\n    },\n    'Veldkrekel': {\n        scientific: 'Gryllus campestris',\n        status: 'Zeldzaam',\n        habitat: 'Droge graslanden, heide',\n        activity: 'Dag en avond actief',\n        sound: 'Heldere fluitende roep',\n        size: '15-25 mm',\n        observations: 23,\n        lastSeen: '2024-04-08',\n        months: [0, 0, 5, 18, 45, 67, 78, 45, 23, 8, 2, 0],\n        description: 'Grote zwarte krekel met krachtige achterpoten. Graaft diepe gangen in de grond.',\n        threats: 'Intensieve landbouw, bebouwing',\n        conservation: 'Kwetsbaar'\n    },\n    'Huiskrekel': {\n        scientific: 'Acheta domesticus',\n        status: 'Algemeen',\n        habitat: 'Gebouwen, kassen, warme plekken',\n        activity: 'Nachtactief',\n        sound: 'Continu tjirpen',\n        size: '16-20 mm',\n        observations: 89,\n        lastSeen: '2024-04-20',\n        months: [15, 18, 22, 28, 35, 42, 48, 45, 38, 32, 25, 18],\n        description: 'Lichtbruine krekel die het hele jaar door actief is in verwarmde gebouwen.',\n        threats: 'Geen directe bedreigingen',\n        conservation: 'Niet bedreigd'\n    },\n    'Grote groene sabelsprinkhaan': {\n        scientific: 'Tettigonia viridissima',\n        status: 'Algemeen',\n        habitat: 'Bossen, struikgewas, tuinen',\n        activity: 'Avond en nacht actief',\n        sound: 'Luid zoemend geluid',\n        size: '28-42 mm',\n        observations: 134,\n        lastSeen: '2024-04-18',\n        months: [0, 0, 2, 12, 35, 67, 89, 95, 78, 45, 15, 0],\n        description: 'Grote groene springhaan met lange antennes en krachtige kaken. Goede vlieger.',\n        threats: 'Habitatverlies door bebouwing',\n        conservation: 'Niet bedreigd'\n    },\n    'Gewone sprinkhaan': {\n        scientific: 'Chorthippus brunneus',\n        status: 'Zeer algemeen',\n        habitat: 'Graslanden, weilanden, wegbermen',\n        activity: 'Overdag actief',\n        sound: 'Kort ratelend geluid',\n        size: '15-22 mm',\n        observations: 287,\n        lastSeen: '2024-04-22',\n        months: [0, 0, 8, 25, 56, 78, 92, 89, 67, 34, 12, 2],\n        description: 'Bruine kortsprietsprinkhaan die vaak in grote aantallen voorkomt in grasland.',\n        threats: 'Intensief graslandbeheer',\n        conservation: 'Niet bedreigd'\n    },\n    'Boomkrekel': {\n        scientific: 'Oecanthus pellucens',\n        status: 'Vrij zeldzaam',\n        habitat: 'Struiken, bomen, klimplanten',\n        activity: 'Nachtactief',\n        sound: 'Zacht melodieus tjirpen',\n        size: '10-15 mm',\n        observations: 41,\n        lastSeen: '2024-04-12',\n        months: [0, 0, 0, 8, 25, 45, 67, 78, 56, 23, 5, 0],\n        description: 'Kleine, lichtgekleurde krekel die leeft in de vegetatie. Zeer gevoelig voor temperatuur.',\n        threats: 'Klimaatverandering, habitatverlies',\n        conservation: 'Gevoelig'\n    }\n};\n\nvar speciesName = null;\n\n// Als het een directe knop is (quick_select)\nif (msg.topic === 'quick_select') {\n    speciesName = msg.payload;\n    context.set('lastSpeciesInput', speciesName);\n}\n// Als het de zoekknop is\nelse if (msg.topic === 'search_button') {\n    // Haal de ingevoerde tekst uit de context (van het tekstveld)\n    var inputText = context.get('species_input_text');\n    if (inputText) {\n        speciesName = inputText;\n        context.set('lastSpeciesInput', speciesName);\n    }\n}\n// Als het het tekstveld is (opslaan in context)\nelse if (msg.topic === 'species_input') {\n    context.set('species_input_text', msg.payload);\n    return null; // Stuur niets door, wacht op zoekknop\n}\n\n// Als er geen soort is geselecteerd\nif (!speciesName) {\n    return {speciesName: null, speciesData: null, payload: null};\n}\n\n// Zoek de soort in de database\nvar foundSpecies = null;\nvar searchName = speciesName.toLowerCase();\n\n// Exacte match\nfor (var key in speciesDatabase) {\n    if (key.toLowerCase() === searchName) {\n        foundSpecies = key;\n        break;\n    }\n}\n\n// Gedeeltelijke match als exacte match niet gevonden\nif (!foundSpecies) {\n    for (var key in speciesDatabase) {\n        if (key.toLowerCase().includes(searchName) || searchName.includes(key.toLowerCase())) {\n            foundSpecies = key;\n            break;\n        }\n    }\n}\n\n// Resultaat samenstellen\nvar speciesData;\nif (foundSpecies) {\n    speciesData = speciesDatabase[foundSpecies];\n    speciesName = foundSpecies;\n} else {\n    speciesData = {\n        scientific: 'Onbekend',\n        status: 'Onbekend',\n        habitat: 'Geen informatie beschikbaar',\n        activity: 'Onbekend',\n        sound: 'Geen informatie',\n        size: 'Onbekend',\n        observations: 0,\n        lastSeen: 'Onbekend',\n        months: [0,0,0,0,0,0,0,0,0,0,0,0],\n        description: 'Geen beschrijving beschikbaar voor \"' + speciesName + '\". Probeer: Bramensprinkhaan, Veldkrekel, Huiskrekel, Grote groene sabelsprinkhaan, Gewone sprinkhaan, of Boomkrekel.',\n        threats: 'Onbekend',\n        conservation: 'Onbekend'\n    };\n}\n\nreturn {\n    speciesName: speciesName,\n    speciesData: speciesData,\n    payload: speciesData\n};",
         "outputs": 1,
@@ -238,18 +238,18 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 400,
-        "y": 380,
+        "x": 410,
+        "y": 280,
         "wires": [
             [
-                "f2e59fdac6cc83bf"
+                "e9384c78c41d1b1f"
             ]
         ]
     },
     {
-        "id": "f2e59fdac6cc83bf",
+        "id": "e9384c78c41d1b1f",
         "type": "ui_template",
-        "z": "7100982d56dc1786",
+        "z": "3f21aa752c834eb6",
         "group": "b6f97192dcfaab52",
         "name": "Interactive Species Explorer",
         "order": 1,
@@ -262,7 +262,7 @@
         "templateScope": "local",
         "className": "",
         "x": 680,
-        "y": 380,
+        "y": 280,
         "wires": [
             []
         ]
@@ -326,7 +326,7 @@
     {
         "id": "b30a1c26b77a9b48",
         "type": "ui_tab",
-        "name": "[SoortInfo Dashboard]",
+        "name": "Soort Dashboard",
         "icon": "dashboard",
         "disabled": false,
         "hidden": false

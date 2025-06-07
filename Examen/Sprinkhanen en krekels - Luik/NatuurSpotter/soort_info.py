@@ -13,19 +13,11 @@ def soort_info(soort):
     zoek_url = f"https://waarnemingen.be/search/?q={soort.replace(' ', '+')}"
     zoek_resp = requests.get(zoek_url)
     zoek_soup = BeautifulSoup(zoek_resp.text, "html.parser")
-
-    lijstitem = zoek_soup.find("li", class_="lead")
-    # if not lijstitem:
-    #     print(f"Geen resultaten gevonden voor '{soort}' op waarnemingen.be")
-    #     return
-        
-    a_tag = lijstitem.find("a", href=True)
-    # if not a_tag:
-    #     print(f"Geen link gevonden voor '{soort}' op waarnemingen.be")
-    #     return
-        
+    lijstitem = zoek_soup.find("li", class_="lead")        
+    a_tag = lijstitem.find("a", href=True)        
     href = a_tag["href"]
     soort_id = href.strip("/").split("/")[-1]
+    
     soort_url = f"https://waarnemingen.be{href}"
     resp = requests.get(soort_url)
     soup = BeautifulSoup(resp.text, "html.parser")
