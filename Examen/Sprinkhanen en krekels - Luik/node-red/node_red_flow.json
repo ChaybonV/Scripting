@@ -1,0 +1,299 @@
+[
+    {
+        "id": "ddd3369c16a022bc",
+        "type": "tab",
+        "label": "NatuurSpotter Dashboard",
+        "disabled": false,
+        "info": ""
+    },
+    {
+        "id": "4a0113f5ced7757f",
+        "type": "ui_button",
+        "z": "ddd3369c16a022bc",
+        "name": "Load Soort Data",
+        "group": "2cad3c5fbf8242da",
+        "order": 1,
+        "width": 6,
+        "height": 1,
+        "passthru": false,
+        "label": "Laad Soorten Data",
+        "tooltip": "CSV soorten data laden en tonen",
+        "color": "white",
+        "bgcolor": "#3498db",
+        "className": "",
+        "icon": "bar-chart",
+        "payload": "",
+        "payloadType": "str",
+        "topic": "",
+        "topicType": "str",
+        "x": 140,
+        "y": 220,
+        "wires": [
+            [
+                "523100a1c917dcec"
+            ]
+        ]
+    },
+    {
+        "id": "523100a1c917dcec",
+        "type": "file in",
+        "z": "ddd3369c16a022bc",
+        "name": "Read Soort CSV",
+        "filename": "data/soorten_info.csv",
+        "filenameType": "str",
+        "format": "utf8",
+        "chunk": false,
+        "sendError": false,
+        "encoding": "none",
+        "allProps": false,
+        "x": 350,
+        "y": 220,
+        "wires": [
+            [
+                "16c15c56fc94ae04"
+            ]
+        ]
+    },
+    {
+        "id": "16c15c56fc94ae04",
+        "type": "function",
+        "z": "ddd3369c16a022bc",
+        "name": "Process Soort Data",
+        "func": "// CSV tekst uit bericht halen en opschonen\nvar csvTekst = msg.payload.trim();\nvar gegevens = [];\n\nfunction parseerCSV(tekst) {\n    var regels = [];\n    var huidigeRegel = '';\n    var inAanhalingstekens = false;\n    var i = 0;\n\n    while (i < tekst.length) {\n        var karakter = tekst[i];\n        if (karakter === '\"') {\n            inAanhalingstekens = !inAanhalingstekens;\n            huidigeRegel += karakter;\n        } else if (karakter === '\\n' && !inAanhalingstekens) {\n            if (huidigeRegel.trim()) {\n                regels.push(huidigeRegel.trim());\n            }\n            huidigeRegel = '';\n        } else {\n            huidigeRegel += karakter;\n        }\n        i++;\n    }\n    // Laatste regel toevoegen als deze niet leeg is\n    if (huidigeRegel.trim()) {\n        regels.push(huidigeRegel.trim());\n    }\n    return regels;\n}\n\nfunction parseerCSVRij(rij) {\n    var resultaat = [];\n    var huidig = '';\n    var inAanhalingstekens = false;\n    var i = 0;\n\n    while (i < rij.length) {\n        var karakter = rij[i];\n        if (karakter === '\"') {\n            // Dubbele aanhalingstekens binnen aanhalingstekens = letterlijke aanhalingsteken\n            if (inAanhalingstekens && rij[i + 1] === '\"') {\n                huidig += '\"';\n                i++; // Extra karakter overslaan\n            } else {\n                inAanhalingstekens = !inAanhalingstekens;\n            }\n        } else if (karakter === ',' && !inAanhalingstekens) {\n            // Komma buiten aanhalingstekens = nieuwe kolom\n            resultaat.push(huidig);\n            huidig = '';\n        } else {\n            huidig += karakter;\n        }\n        i++;\n    }\n    // Laatste kolom toevoegen\n    resultaat.push(huidig);\n    return resultaat;\n}\n\ntry {\n    // CSV tekst parsen naar individuele regels\n    var regels = parseerCSV(csvTekst);\n    node.warn('CSV geparseerd naar ' + regels.length + ' regels');\n\n    // Controleren of er voldoende data is (minimaal header + 1 regel)\n    if (regels.length < 2) {\n        return { payload: [], topic: 'geen_data' };\n    }\n\n    // Door alle regels itereren (eerste regel = header, dus vanaf index 1)\n    for (var i = 1; i < regels.length; i++) {\n        var regel = regels[i];\n        if (!regel.trim()) continue; // Lege regels overslaan\n\n        // Regel parsen naar individuele kolommen\n        var kolommen = parseerCSVRij(regel);\n\n        // Controleren of er voldoende kolommen zijn voor een soort\n        if (kolommen.length >= 8) {\n            var soort = {\n                soort: kolommen[0] || 'Onbekend',\n                scientific: kolommen[1] || 'Onbekend',\n                status: kolommen[2] || 'Onbekend',\n                observations: parseInt(kolommen[3]) || 0,\n                lastSeen: kolommen[4] || 'Onbekend',\n                description: kolommen[5] || 'Geen beschrijving',\n                conservation: kolommen[6] || 'Onbekend',\n                image_url: kolommen[7] || 'Geen afbeelding'\n            };\n            gegevens.push(soort);\n        }\n    }\n\n    // Resultaat loggen en terugsturen\n    node.warn('Totaal aantal soorten verwerkt: ' + gegevens.length);\n    return { payload: gegevens, topic: 'soorten_data' };\n\n} catch (fout) {\n    // Foutafhandeling\n    node.error('Fout: ' + fout.message);\n    return { payload: [], topic: 'fout', error: fout.message };\n}",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 550,
+        "y": 220,
+        "wires": [
+            [
+                "5e5bc6a6f352030d"
+            ]
+        ]
+    },
+    {
+        "id": "5e5bc6a6f352030d",
+        "type": "ui_template",
+        "z": "ddd3369c16a022bc",
+        "group": "b6f97192dcfaab52",
+        "name": "Soort Display",
+        "order": 1,
+        "width": 12,
+        "height": 18,
+        "format": "<style>\n    .soorten-verkenner {\n        width: 100%;\n        height: 100%;\n        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);\n        border-radius: 20px;\n        overflow: hidden;\n        font-family: 'Segoe UI', sans-serif;\n        color: white;\n        position: relative\n    }\n\n    .verkenner-koptekst {\n        background: rgba(255, 255, 255, 0.1);\n        backdrop-filter: blur(10px);\n        padding: 25px;\n        text-align: center;\n        border-bottom: 1px solid rgba(255, 255, 255, 0.2)\n    }\n\n    .verkenner-titel {\n        font-size: 2.2em;\n        font-weight: 700;\n        margin: 0;\n        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3)\n    }\n\n    .verkenner-ondertitel {\n        font-size: 1em;\n        opacity: 0.8;\n        margin-top: 10px\n    }\n\n    .verkenner-inhoud {\n        padding: 30px;\n        height: calc(100% - 140px);\n        overflow-y: auto\n    }\n\n    .soorten-raster {\n        display: grid;\n        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));\n        gap: 25px\n    }\n\n    .soorten-kaart {\n        background: rgba(255, 255, 255, 0.15);\n        backdrop-filter: blur(10px);\n        border-radius: 15px;\n        padding: 25px;\n        border: 1px solid rgba(255, 255, 255, 0.2);\n        transition: all 0.3s ease\n    }\n\n    .soorten-kaart:hover {\n        background: rgba(255, 255, 255, 0.25);\n        transform: translateY(-5px);\n        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2)\n    }\n\n    .soorten-naam {\n        font-size: 1.4em;\n        font-weight: 700;\n        margin-bottom: 8px;\n        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3)\n    }\n\n    .soorten-wetenschappelijk {\n        font-size: 1em;\n        font-style: italic;\n        opacity: 0.9;\n        margin-bottom: 15px\n    }\n\n    .status-badge {\n        display: inline-block;\n        padding: 6px 15px;\n        border-radius: 20px;\n        font-weight: 600;\n        font-size: 0.8em;\n        text-transform: uppercase;\n        letter-spacing: 0.5px;\n        margin-bottom: 15px;\n        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);\n        background: linear-gradient(45deg, #3498db, #2980b9)\n    }\n\n    .soorten-afbeelding-container {\n        position: relative;\n        width: 100%;\n        height: 150px;\n        border-radius: 10px;\n        margin-bottom: 15px;\n        overflow: hidden;\n        /* Gradient achtergrond voor witte gebieden */\n        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);\n        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);\n    }\n\n    .soorten-afbeelding {\n        width: 100%;\n        height: 100%;\n        object-fit: cover;\n        border-radius: 10px;\n        transition: transform 0.3s ease, opacity 0.3s ease;\n        /* Fallback gradient voor loading */\n        background: linear-gradient(135deg, rgba(102, 126, 234, 0.5) 0%, rgba(118, 75, 162, 0.5) 100%);\n    }\n\n    .soorten-kaart:hover .soorten-afbeelding {\n        transform: scale(1.05);\n    }\n\n    .soorten-informatie {\n        display: grid;\n        grid-template-columns: 1fr 1fr;\n        gap: 10px;\n        margin-bottom: 15px;\n        font-size: 0.9em\n    }\n\n    .informatie-item {\n        background: rgba(0, 0, 0, 0.2);\n        padding: 8px 12px;\n        border-radius: 8px;\n        text-align: center\n    }\n\n    .informatie-label {\n        font-weight: 600;\n        font-size: 0.8em;\n        opacity: 0.8;\n        margin-bottom: 2px\n    }\n\n    .informatie-waarde {\n        font-weight: 700\n    }\n\n    .beschrijving {\n        background: rgba(0, 0, 0, 0.2);\n        padding: 15px;\n        border-radius: 10px;\n        margin-top: 15px;\n        line-height: 1.4;\n        font-size: 0.9em;\n        max-height: 200px;\n        overflow-y: auto\n    }\n\n    .geen-data {\n        text-align: center;\n        padding: 60px 20px;\n        opacity: 0.8\n    }\n\n    .fout-bericht {\n        background: rgba(231, 76, 60, 0.2);\n        border: 1px solid rgba(231, 76, 60, 0.5);\n        padding: 20px;\n        border-radius: 10px;\n        margin: 20px;\n        text-align: center\n    }\n\n    .statistieken-samenvatting {\n        background: rgba(255, 255, 255, 0.1);\n        backdrop-filter: blur(10px);\n        border-radius: 15px;\n        padding: 20px;\n        margin-bottom: 30px;\n        display: grid;\n        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));\n        gap: 15px\n    }\n\n    .statistiek-item {\n        text-align: center\n    }\n\n    .statistiek-waarde {\n        font-size: 2em;\n        font-weight: 700;\n        color: #f39c12;\n        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3)\n    }\n\n    .statistiek-label {\n        font-size: 0.9em;\n        opacity: 0.9;\n        margin-top: 5px\n    }\n\n    @media (max-width:768px) {\n        .soorten-raster {\n            grid-template-columns: 1fr\n        }\n\n        .soorten-informatie {\n            grid-template-columns: 1fr\n        }\n\n        .statistieken-samenvatting {\n            grid-template-columns: 1fr\n        }\n    }\n</style>\n\n<div class=\"soorten-verkenner\">\n    <div class=\"verkenner-koptekst\">\n        <h1 class=\"verkenner-titel\">Soorten Database</h1>\n        <div class=\"verkenner-ondertitel\">Sprinkhanen & Krekels in Luik</div>\n    </div>\n    <div class=\"verkenner-inhoud\">\n        <div ng-if=\"msg.error\" class=\"fout-bericht\">\n            <h3>Fout bij laden van data</h3>\n            <p>{{msg.error}}</p>\n        </div>\n        <div ng-if=\"msg.payload && msg.payload.length > 0 && !msg.error\">\n            <div class=\"statistieken-samenvatting\">\n                <div class=\"statistiek-item\">\n                    <div class=\"statistiek-waarde\">{{msg.payload.length}}</div>\n                    <div class=\"statistiek-label\">Soorten geladen</div>\n                </div>\n                <div class=\"statistiek-item\">\n                    <div class=\"statistiek-waarde\">{{haalTotaalWaarnemingen()}}</div>\n                    <div class=\"statistiek-label\">Totaal waarnemingen</div>\n                </div>\n            </div>\n            <div class=\"soorten-raster\">\n                <div ng-repeat=\"soort in msg.payload\" class=\"soorten-kaart\">\n                    <div class=\"soorten-naam\">{{soort.soort}}</div>\n                    <div class=\"soorten-wetenschappelijk\">{{soort.scientific}}</div>\n                    <span class=\"status-badge status-{{soort.status.toLowerCase().replace(' ', '-')}}\">{{soort.status}}</span>\n\n                    <div ng-if=\"soort.image_url && soort.image_url !== 'Geen afbeelding'\"\n                        class=\"soorten-afbeelding-container\">\n                        <img ng-src=\"{{soort.image_url}}\"\n                             class=\"soorten-afbeelding\"\n                             alt=\"{{soort.soort}}\"\n                             onerror=\"this.parentElement.innerHTML='<div class=&quot;soorten-afbeelding-placeholder&quot;>🦗</div>'\">\n                    </div>\n\n                    <div class=\"soorten-informatie\">\n                        <div class=\"informatie-item\">\n                            <div class=\"informatie-label\">Waarnemingen</div>\n                            <div class=\"informatie-waarde\">{{soort.observations}}</div>\n                        </div>\n                        <div class=\"informatie-item\">\n                            <div class=\"informatie-label\">Laatste waarneming</div>\n                            <div class=\"informatie-waarde\">{{soort.lastSeen}}</div>\n                        </div>\n                    </div>\n                    <div class=\"beschrijving\">{{soort.description}}</div>\n                </div>\n            </div>\n        </div>\n        <div ng-if=\"(!msg.payload || msg.payload.length === 0) && !msg.error\" class=\"geen-data\">\n            <p>Klik op 'Laad Soorten Data' om de gegevens te bekijken</p>\n        </div>\n    </div>\n</div>\n\n<script>\n    (function(scope) {\n        scope.haalTotaalWaarnemingen = function() {\n            if (!scope.msg || !scope.msg.payload) return 0;\n            return scope.msg.payload.reduce(function(totaal, soort) {\n                return totaal + (soort.observations || 0);\n            }, 0);\n        };\n    })(scope);\n</script>",
+        "storeOutMessages": true,
+        "fwdInMessages": true,
+        "resendOnRefresh": true,
+        "templateScope": "local",
+        "className": "",
+        "x": 750,
+        "y": 220,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "a35562537cc70aea",
+        "type": "ui_button",
+        "z": "ddd3369c16a022bc",
+        "name": "Load Biodiversity",
+        "group": "09546c12f4874d7b",
+        "order": 1,
+        "width": 6,
+        "height": 1,
+        "passthru": false,
+        "label": "Laad Biodiversiteit Data",
+        "tooltip": "CSV data laden, grafieken en tabellen tonen",
+        "color": "white",
+        "bgcolor": "#3498db",
+        "className": "",
+        "icon": "bar-chart",
+        "payload": "",
+        "payloadType": "str",
+        "topic": "",
+        "topicType": "str",
+        "x": 150,
+        "y": 100,
+        "wires": [
+            [
+                "608a62f06f115195"
+            ]
+        ]
+    },
+    {
+        "id": "608a62f06f115195",
+        "type": "file in",
+        "z": "ddd3369c16a022bc",
+        "name": "Read CSV",
+        "filename": "data/waarnemingen_4_2024.csv",
+        "filenameType": "str",
+        "format": "utf8",
+        "chunk": false,
+        "sendError": false,
+        "encoding": "none",
+        "x": 330,
+        "y": 100,
+        "wires": [
+            [
+                "9f46b2fdf9fbc962"
+            ]
+        ]
+    },
+    {
+        "id": "9f46b2fdf9fbc962",
+        "type": "function",
+        "z": "ddd3369c16a022bc",
+        "name": "Process Biodiversity Data",
+        "func": "// CSV regels splitsen en lege regels filteren\nvar regels = msg.payload.split('\\n').filter(regel => regel.trim());\nvar gegevens = [];\n\n// Door alle regels itereren (eerste regel = header, dus vanaf index 1)\nfor (var i = 1; i < regels.length; i++) {\n    var kolommen = regels[i].split(';');\n\n    // Controleren of er voldoende kolommen zijn\n    if (kolommen.length >= 3) {\n        // Soortnaam en wetenschappelijke naam splitsen (gescheiden door \" - \")\n        var naamDelen = kolommen[0].split(' - ');\n        var soort = naamDelen[0].trim();\n        var wetenschappelijk = naamDelen[1] ? naamDelen[1].trim() : '';\n        var aantal = parseInt(kolommen[1]) || 0;\n        var datum = kolommen[2].trim();\n\n        // Soortgegevens toevoegen aan de gegevensarray\n        gegevens.push({\n            soort: soort,\n            wetenschappelijk: wetenschappelijk,\n            aantal: aantal,\n            datum: datum\n        });\n    }\n}\n\n// Sorteer voor meest waargenomen soorten (top 10)\nvar gesorteerHoog = gegevens.slice().sort((a, b) => b.aantal - a.aantal);\nvar topSoorten = gesorteerHoog.slice(0, 10);\n\n// Maak grafiek berichten voor de meest waargenomen soorten\nvar grafiekBerichten = [];\nfor (var i = 0; i < topSoorten.length; i++) {\n    grafiekBerichten.push({\n        payload: topSoorten[i].aantal,\n        topic: topSoorten[i].soort\n    });\n}\n\n// Sorteer voor zeldzame soorten (laagste aantallen)\nvar gesorteerLaag = gegevens.slice().sort((a, b) => a.aantal - b.aantal);\nvar zeldzameSoorten = gesorteerLaag.slice(0, 10);\n\n// Verstuur grafiek data voor top soorten\nfor (var j = 0; j < grafiekBerichten.length; j++) {\n    node.send([grafiekBerichten[j], null]);\n}\n\n// Verstuur tabel data voor zeldzame soorten\nreturn [null, { payload: zeldzameSoorten, topic: 'tabel' }];",
+        "outputs": 2,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 530,
+        "y": 100,
+        "wires": [
+            [
+                "80fc506b9758a88e"
+            ],
+            [
+                "9389a48a99be09cb"
+            ]
+        ]
+    },
+    {
+        "id": "80fc506b9758a88e",
+        "type": "ui_chart",
+        "z": "ddd3369c16a022bc",
+        "name": "Soortenrijkdom Chart",
+        "group": "04644e41071ad5cc",
+        "order": 1,
+        "width": 12,
+        "height": 8,
+        "label": "Meest Waargenomen Soorten",
+        "chartType": "horizontalBar",
+        "legend": "false",
+        "xformat": "string",
+        "interpolate": "linear",
+        "nodata": "Klik op 'Laad Biodiversiteit Data' om de grafiek te tonen",
+        "dot": false,
+        "ymin": "0",
+        "ymax": "",
+        "removeOlder": 1,
+        "removeOlderPoints": "",
+        "removeOlderUnit": "3600",
+        "cutout": 0,
+        "useOneColor": false,
+        "useUTC": false,
+        "colors": [
+            "#e74c3c",
+            "#3498db",
+            "#2ecc71",
+            "#f39c12",
+            "#9b59b6",
+            "#1abc9c",
+            "#34495e",
+            "#e67e22",
+            "#95a5a6"
+        ],
+        "outputs": 1,
+        "useDifferentColor": false,
+        "className": "",
+        "x": 760,
+        "y": 80,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "9389a48a99be09cb",
+        "type": "ui_template",
+        "z": "ddd3369c16a022bc",
+        "group": "4654b640b7594b1f",
+        "name": "Zeldzame Soorten Tabel",
+        "order": 1,
+        "width": 12,
+        "height": 12,
+        "format": "<style>\n    .nr-dashboard-sjabloon {\n        padding: 0 !important;\n        margin: 0 !important;\n        background: transparent !important;\n        box-shadow: none !important;\n        border: none !important;\n    }\n\n    .nr-dashboard-sjabloon .nr-dashboard-sjabloon-inhoud {\n        padding: 0 !important;\n        margin: 0 !important;\n    }\n\n    .soorten-container {\n        width: 100%;\n        height: 100%;\n        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);\n        border-radius: 15px;\n        overflow: hidden;\n        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);\n        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;\n    }\n\n    .soorten-koptekst {\n        margin: 0;\n        padding: 25px;\n        color: white;\n        background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);\n        font-size: 1.4em;\n        font-weight: 600;\n        box-shadow: 0 4px 20px rgba(231, 76, 60, 0.3);\n        text-align: center;\n    }\n\n    .soorten-inhoud {\n        height: calc(100% - 85px);\n        overflow-y: auto;\n        padding: 20px;\n    }\n\n    .soorten-kaart {\n        background: white;\n        margin-bottom: 16px;\n        padding: 24px;\n        border-radius: 12px;\n        border-left: 5px solid #e74c3c;\n        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);\n        transition: all 0.3s ease;\n        border: 1px solid #f1f3f4;\n    }\n\n    .soorten-kaart:hover {\n        transform: translateY(-2px);\n        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);\n        border-left-color: #c0392b;\n    }\n\n    .soorten-informatie {\n        display: flex;\n        justify-content: space-between;\n        align-items: flex-start;\n        margin-bottom: 16px;\n    }\n\n    .soorten-details {\n        flex: 1;\n        margin-right: 20px;\n    }\n\n    .soorten-naam {\n        font-weight: 700;\n        color: #2c3e50;\n        margin-bottom: 8px;\n        font-size: 1.2em;\n        line-height: 1.3;\n    }\n\n    .soorten-wetenschappelijk {\n        font-style: italic;\n        color: #6c757d;\n        margin-bottom: 12px;\n        font-size: 1em;\n        line-height: 1.4;\n    }\n\n    .soorten-aantal {\n        background: linear-gradient(45deg, #e74c3c, #c0392b);\n        color: white;\n        padding: 10px 16px;\n        border-radius: 25px;\n        font-size: 0.9em;\n        font-weight: 600;\n        white-space: nowrap;\n        box-shadow: 0 3px 12px rgba(231, 76, 60, 0.25);\n    }\n\n    .soorten-datum {\n        color: #868e96;\n        font-size: 0.95em;\n        display: flex;\n        align-items: center;\n        margin-top: 4px;\n    }\n\n    .lege-staat {\n        text-align: center;\n        color: #6c757d;\n        padding: 80px 20px;\n    }\n\n    .lege-tekst {\n        font-family: Arial, sans-serif;\n        font-size: 1.1em;\n        line-height: 1.6;\n        color: #495057;\n    }\n\n    .statistieken-samenvatting {\n        background: white;\n        border-radius: 12px;\n        padding: 20px;\n        margin-bottom: 20px;\n        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);\n        border-left: 5px solid #3498db;\n    }\n\n    .statistieken-rij {\n        display: flex;\n        justify-content: space-between;\n        margin-bottom: 10px;\n    }\n\n    .statistieken-label {\n        font-weight: 600;\n        color: #2c3e50;\n    }\n\n    .statistieken-waarde {\n        color: #27ae60;\n        font-weight: 700;\n    }\n</style>\n\n<div class=\"soorten-container\">\n    <h4 class=\"soorten-koptekst\">Zeldzame Soorten in de Provincie</h4>\n\n    <div class=\"soorten-inhoud\">\n        <div ng-if=\"msg.payload && msg.payload.length > 0\">\n            <div class=\"statistieken-samenvatting\">\n                <div class=\"statistieken-rij\">\n                    <span class=\"statistieken-label\">Aantal zeldzame soorten:</span>\n                    <span class=\"statistieken-waarde\">{{msg.payload.length}}</span>\n                </div>\n                <div class=\"statistieken-rij\">\n                    <span class=\"statistieken-label\">Minste waarnemingen:</span>\n                    <span class=\"statistieken-waarde\">{{msg.payload[0].aantal}}</span>\n                </div>\n                <div class=\"statistieken-rij\">\n                    <span class=\"statistieken-label\">Meeste waarnemingen (van zeldzame):</span>\n                    <span class=\"statistieken-waarde\">{{msg.payload[msg.payload.length-1].aantal}}</span>\n                </div>\n            </div>\n        </div>\n\n        <div ng-repeat=\"item in msg.payload\" class=\"soorten-kaart\">\n            <div class=\"soorten-informatie\">\n                <div class=\"soorten-details\">\n                    <div class=\"soorten-naam\">{{item.soort}}</div>\n                    <div ng-if=\"item.wetenschappelijk\" class=\"soorten-wetenschappelijk\">{{item.wetenschappelijk}}</div>\n                </div>\n                <div class=\"soorten-aantal\">{{item.aantal}} waarnemingen</div>\n            </div>\n            <div class=\"soorten-datum\">\n                Laatst gezien: {{item.datum}}\n            </div>\n        </div>\n\n        <div ng-if=\"!msg.payload || msg.payload.length === 0\" class=\"lege-staat\">\n            <p class=\"lege-tekst\">Klik op 'Laad Biodiversiteit Data' om de zeldzame soorten te bekijken</p>\n        </div>\n    </div>\n</div>",
+        "storeOutMessages": true,
+        "fwdInMessages": true,
+        "resendOnRefresh": true,
+        "templateScope": "local",
+        "className": "",
+        "x": 770,
+        "y": 120,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "2cad3c5fbf8242da",
+        "type": "ui_group",
+        "name": "Soort Selectie & Besturing",
+        "tab": "b30a1c26b77a9b48",
+        "order": 1,
+        "disp": true,
+        "width": "12",
+        "collapse": false,
+        "className": ""
+    },
+    {
+        "id": "b6f97192dcfaab52",
+        "type": "ui_group",
+        "name": "Interactieve Soort Explorer",
+        "tab": "b30a1c26b77a9b48",
+        "order": 2,
+        "disp": true,
+        "width": "12",
+        "collapse": false,
+        "className": ""
+    },
+    {
+        "id": "09546c12f4874d7b",
+        "type": "ui_group",
+        "name": "Besturing",
+        "tab": "biodiv_tab",
+        "order": 1,
+        "disp": true,
+        "width": "12"
+    },
+    {
+        "id": "04644e41071ad5cc",
+        "type": "ui_group",
+        "name": "Soortenrijkdom Grafiek",
+        "tab": "biodiv_tab",
+        "order": 3,
+        "disp": false,
+        "width": "12",
+        "collapse": false,
+        "className": ""
+    },
+    {
+        "id": "4654b640b7594b1f",
+        "type": "ui_group",
+        "name": "Zeldzame Soorten",
+        "tab": "biodiv_tab",
+        "order": 2,
+        "disp": true,
+        "width": "12"
+    },
+    {
+        "id": "b30a1c26b77a9b48",
+        "type": "ui_tab",
+        "name": "Soort Dashboard",
+        "icon": "dashboard",
+        "disabled": false,
+        "hidden": false
+    },
+    {
+        "id": "biodiv_tab",
+        "type": "ui_tab",
+        "name": "Biodiversiteit Dashboard",
+        "icon": "dashboard",
+        "order": 1
+    }
+]
