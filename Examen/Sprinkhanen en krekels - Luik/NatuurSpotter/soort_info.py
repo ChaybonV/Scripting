@@ -15,6 +15,7 @@ from bs4 import BeautifulSoup
 from datetime import date
 import os
 import csv
+import re
 from fpdf import FPDF
 from PIL import Image
 from io import BytesIO
@@ -54,17 +55,17 @@ def soort_info(soort):
 
     # Haal algemene soortinformatie op
     beschrijving_div = soup.find("div", class_="app-content-section js-user-content")
-    beschrijving = beschrijving_div.get_text().strip() if beschrijving_div else "Geen beschrijving gevonden"
+    beschrijving = beschrijving_div.get_text().strip()
     latijn_tag = soup.find("i", class_="species-scientific-name")
-    latijnse_naam = latijn_tag.text.strip() if latijn_tag else "Onbekend"
+    latijnse_naam = latijn_tag.text.strip()
     status_span = soup.find("span", class_="hidden-sm")
-    status = status_span.text.strip() if status_span else "Onbekend"
+    status = status_span.text.strip()
 
-    # Zoek naar soortafbeelding
+    # Zoek naar afbeelding van het dier
     afbeelding_tag = soup.find("figure", class_="app-ratio-box-4-3 lightbox-gallery")
     if afbeelding_tag:
         img = afbeelding_tag.find("img")
-        afbeelding_url = "https://waarnemingen.be" + img["src"] if img else "Geen afbeelding"
+        afbeelding_url = "https://waarnemingen.be" + img["src"]
     else:
         afbeelding_url = "Geen afbeelding"
 
@@ -78,7 +79,7 @@ def soort_info(soort):
     obs_soup = BeautifulSoup(obs_resp.text, "html.parser")
     tbody = obs_soup.find("tbody")
     
-    # Initialiseer variabelen voor data-analyse
+    # Initialiseer variabelen voor data-analyse (node-red & pdf file)
     observaties = []
     totaal_waarnemingen = 0
     laatste_waarneming = "Onbekend"
@@ -86,7 +87,7 @@ def soort_info(soort):
     if tbody:
         # Parse elke waarnemingsrij
         rijen = tbody.find_all("tr", class_=["even", "odd"])
-        for rij in rijen[:50]:  # Neem max 50 waarnemingen voor analyse
+        for rij in rijen[:10]:
             kolommen = rij.find_all("td")
             if len(kolommen) >= 3:
                 datum = kolommen[0].text.strip()
@@ -112,21 +113,21 @@ def soort_info(soort):
     wiki_resp = requests.get(wiki_zoek_url)
     wiki_soup = BeautifulSoup(wiki_resp.text, "html.parser")
     
-    # Zoek naar wetenschappelijke naam
+    # Latijnse naam
     soort_cell = wiki_soup.find("td", class_="ta-center")
     if soort_cell:
         latijn_element = soort_cell.find("i")
         if latijn_element:
             wiki_latijnse_naam = latijn_element.find("b").text.strip() if latijn_element.find("b") else latijn_element.text.strip()
     
-    # Haal beschrijving op
+    # Beschrijving
     content_div = wiki_soup.find("div", class_="mw-content-ltr mw-parser-output")
     if content_div:
         paragraphs = content_div.find_all("p")
         for p in paragraphs:
             text = p.get_text().strip()
-            # Zoek naar relevante paragrafen (min. 100 chars, bevat relevante keywords)
-            if len(text) > 100 and any(keyword in text.lower() for keyword in ['springhaan', 'familie', 'soort', 'kleur', 'lang']):
+            # Zoek naar relevante alinea's (min. 50 chars, bevat relevante keywords)
+            if len(text) > 50 and any(keyword in text.lower() for keyword in ['springhaan', 'familie', 'soort', 'kleur', 'lang']):
                 wiki_beschrijving = text.replace('\n', ' ').strip()
                 # Beperk tot eerste 3 zinnen voor leesbaarheid
                 zinnen = wiki_beschrijving.split('. ')
@@ -138,35 +139,34 @@ def soort_info(soort):
     volledige_beschrijving = ""
     if wiki_beschrijving != "Geen Wikipedia informatie gevonden":
         volledige_beschrijving = wiki_beschrijving
-    if beschrijving != "Geen beschrijving gevonden" and beschrijving:
+    if beschrijving:
         if volledige_beschrijving:
             volledige_beschrijving += " " + beschrijving
         else:
             volledige_beschrijving = beschrijving
 
+    # Alle data correct formatteren voor CSV file (dit hebben we nodig voor gebruik in node-red)
+    volledige_beschrijving = volledige_beschrijving.replace('\n', ' ').replace('\r', ' ')
+    volledige_beschrijving = re.sub(r'\s+', ' ', volledige_beschrijving).strip()
+    soort = soort.replace('\n', ' ').replace('\r', ' ').strip()
+    wiki_latijnse_naam = wiki_latijnse_naam.replace('\n', ' ').replace('\r', ' ').strip()
+    status = status.replace('\n', ' ').replace('\r', ' ').strip()
+    laatste_waarneming = laatste_waarneming.replace('\n', ' ').replace('\r', ' ').strip()
+    afbeelding_url = afbeelding_url.replace('\n', ' ').replace('\r', ' ').strip()
+    
     # Maak data directory aan voor output bestanden
     if not os.path.exists("data"):
         os.makedirs("data")
 
     # Compileer alle soortgegevens in een dictionary
-    soort_data = {
-        'soort': soort,
-        'scientific': wiki_latijnse_naam,
-        'status': status,
-        'observations': totaal_waarnemingen,
-        'lastSeen': laatste_waarneming,
-        'description': volledige_beschrijving,
-        'conservation': status,
-        'image_url': afbeelding_url
-    }
+    soort_data = {'soort': soort,'scientific': wiki_latijnse_naam,'status': status,'observations': totaal_waarnemingen,'lastSeen': laatste_waarneming,'description': volledige_beschrijving,'conservation': status,'image_url': afbeelding_url}
 
-    # Sla gegevens op in CSV bestand
     csv_path = "data/soorten_info.csv"
     file_exists = os.path.isfile(csv_path)
     
     with open(csv_path, 'a', newline='', encoding='utf-8') as csvfile:
         fieldnames = soort_data.keys()
-        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames,quoting=csv.QUOTE_ALL,quotechar='"',escapechar='\\') # Alle velden worden gequote zodat dit leesbaar is voor node-red
         
         # Schrijf header alleen bij nieuw bestand
         if not file_exists:
@@ -175,7 +175,7 @@ def soort_info(soort):
 
     print(f"Soortinformatie voor '{soort}' toegevoegd aan {csv_path}")
     
-    # Bepaal bestandspad (spaties vervangen door underscores)
+    # PDF aanmaken
     pad = f"data/{soort.replace(' ', '_')}.pdf"
     pdf = FPDF()
     pdf.add_page()
@@ -184,7 +184,7 @@ def soort_info(soort):
     pdf.set_font("Helvetica", 'B', 16)
     pdf.cell(0, 8, soort, ln=True)
 
-    # Voeg soortafbeelding toe
+    # Voeg afbeelding toe
     if afbeelding_url and afbeelding_url != "Geen afbeelding":
         # Download en verwerk afbeelding
         img_data = requests.get(afbeelding_url).content
@@ -197,7 +197,7 @@ def soort_info(soort):
         
         # Voeg toe aan PDF (linksboven, formatie 70x50)
         pdf.image(img_path, x=10, y=pdf.get_y() + 3, w=70, h=50)
-        os.remove(img_path)  # Cleanup tijdelijk bestand
+        os.remove(img_path)  # Delete de tijdelijke image
         pdf.ln(60)  # Maak ruimte onder afbeelding
 
     # Basis soortinformatie
@@ -246,7 +246,7 @@ def soort_info(soort):
         pdf.set_font("Helvetica", '', 8)
         pdf.cell(0, 6, "Geen waarnemingen gevonden", ln=True)
 
-    # Voeg decoratieve border toe rond hele pagina
+    # Border voor pagina
     pdf.set_line_width(0.3)
     margin = 5
     pdf.rect(x=margin, y=margin, w=pdf.w - 2*margin, h=pdf.h - 2*margin)
