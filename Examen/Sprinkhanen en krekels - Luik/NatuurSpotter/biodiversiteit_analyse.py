@@ -41,7 +41,7 @@ def biodiversiteit_analyse(maand=None, jaar=None):
         jaar = int(jaar)
 
     # URL samenstellen voor waarnemingen.be (soortgroep 14 = vogels, land 22 = België (Luik))
-    url = (f"https://waarnemingen.be/species/?species_group_id=14&filter_month={maand}&filter_year={jaar}&filter_country_division=22&include_exotic_and_extinct=on")
+    url = f"https://waarnemingen.be/species/?species_group_id=14&filter_month={maand}&filter_year={jaar}&filter_country_division=22&include_exotic_and_extinct=on"
 
     response = requests.get(url)
     soup = BeautifulSoup(response.text, 'html.parser')
