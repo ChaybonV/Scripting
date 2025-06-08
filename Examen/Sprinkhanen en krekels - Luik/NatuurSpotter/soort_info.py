@@ -147,15 +147,29 @@ def soort_info(soort):
             volledige_beschrijving += " " + beschrijving
         else:
             volledige_beschrijving = beschrijving
-
-    # Alle data correct formatteren voor CSV file (dit hebben we nodig voor gebruik in node-red)
-    volledige_beschrijving = volledige_beschrijving.replace('\n', ' ').replace('\r', ' ')
-    volledige_beschrijving = re.sub(r'\s+', ' ', volledige_beschrijving).strip()
-    soort = soort.replace('\n', ' ').replace('\r', ' ').strip()
-    wiki_latijnse_naam = wiki_latijnse_naam.replace('\n', ' ').replace('\r', ' ').strip()
-    status = status.replace('\n', ' ').replace('\r', ' ').strip()
-    laatste_waarneming = laatste_waarneming.replace('\n', ' ').replace('\r', ' ').strip()
-    afbeelding_url = afbeelding_url.replace('\n', ' ').replace('\r', ' ').strip()
+    
+    # Alle data correct formatteren voor CSV file (dit hebben we nodig voor gebruik in node-red)    
+    if not volledige_beschrijving:
+        volledige_beschrijving = "Geen beschrijving beschikbaar"
+    
+    def formatteer_tekst(tekst):
+        """
+        Helper functie om tekst op te schonen voor csv file
+        """
+        if not tekst:
+            return ""
+        
+        tekst = tekst.replace('\n', ' ').replace('\r', ' ')
+        tekst = re.sub(r'\s+', ' ', tekst).strip()
+        return tekst
+    
+    # Pas functie toe op alle velden
+    soort = formatteer_tekst(soort)
+    wiki_latijnse_naam = formatteer_tekst(wiki_latijnse_naam)
+    status = formatteer_tekst(status)
+    laatste_waarneming = formatteer_tekst(laatste_waarneming)
+    afbeelding_url = formatteer_tekst(afbeelding_url)
+    volledige_beschrijving = formatteer_tekst(volledige_beschrijving)
     
     # Maak data directory aan voor output bestanden
     if not os.path.exists("data"):
