@@ -10,6 +10,7 @@ Data bronnen:
 - Wikipedia: wetenschappelijke beschrijvingen
 """
 
+# imports op basis van eigen kennis
 import requests
 from bs4 import BeautifulSoup
 from datetime import date
@@ -18,6 +19,8 @@ import csv
 import re
 from fpdf import FPDF
 from PIL import Image
+
+# imports op basis van opzoekwerk op het internet
 from io import BytesIO
 
 def soort_info(soort):
