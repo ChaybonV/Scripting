@@ -60,9 +60,20 @@ def observaties_kaart(dag=None):
         locatie_html = kolommen[4]
         
         # Tekst extraheren en opschonen
-        soort_naam = soort_html.text.strip().split(" - ")[0]
-        locatie_naam = locatie_html.text.strip()
-        plaatsnaam = locatie_naam.split("(")[0].strip()  # Alleen plaatsnaam zonder haakjes
+        soort_tekst = soort_html.text.strip()
+        locatie_tekst = locatie_html.text.strip()
+        
+        # soms staat er extra info achter de soortnaam met een -
+        if " - " in soort_tekst:
+            soort_naam = soort_tekst.split(" - ")[0]
+        else:
+            soort_naam = soort_tekst
+            
+        # locatie naam schoonmaken - soms staan er haakjes achter
+        if "(" in locatie_tekst:
+            plaatsnaam = locatie_tekst.split("(")[0].strip()
+        else:
+            plaatsnaam = locatie_tekst
         
         # Coördinaten opzoeken voor de plaatsnaam
         locatie = geocode(f"{plaatsnaam}, Belgium")
