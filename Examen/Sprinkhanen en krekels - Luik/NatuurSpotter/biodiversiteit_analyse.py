@@ -26,10 +26,13 @@ def biodiversiteit_analyse(maand=None, jaar=None):
     # Maand parameter verwerken
     if maand is None:
         maand = datetime.now().month  # Gebruik huidige maand als geen maand opgegeven
-    elif isinstance(maand, str):
-        # Conversietabel voor maandnamen naar nummers
-        maanden = {'januari':1, 'februari':2, 'maart':3, 'april':4, 'mei':5, 'juni':6,'juli':7, 'augustus':8, 'september':9, 'oktober':10, 'november':11, 'december':12}
-        maand = maanden.get(maand.lower(), datetime.now().month)  # Fallback naar huidige maand
+
+    if type(maand) == str:
+        maanden = {'januari': 1, 'februari': 2, 'maart': 3, 'april': 4, 'mei': 5, 'juni': 6, 'juli': 7, 'augustus': 8, 'september': 9, 'oktober': 10, 'november': 11, 'december': 12}
+        if maand.lower() in maanden:
+            maand = maanden[maand.lower()]
+        else:
+            maand = datetime.now().month
     
     # Jaar parameter verwerken
     if jaar is None:
