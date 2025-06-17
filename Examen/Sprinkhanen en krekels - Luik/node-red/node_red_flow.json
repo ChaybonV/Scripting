@@ -1,15 +1,15 @@
 [
     {
-        "id": "ddd3369c16a022bc",
+        "id": "cecb72054ade7c5e",
         "type": "tab",
         "label": "NatuurSpotter Dashboard",
         "disabled": false,
         "info": ""
     },
     {
-        "id": "4a0113f5ced7757f",
+        "id": "b9eec561340cf8b0",
         "type": "ui_button",
-        "z": "ddd3369c16a022bc",
+        "z": "cecb72054ade7c5e",
         "name": "Load Soort Data",
         "group": "2cad3c5fbf8242da",
         "order": 1,
@@ -30,14 +30,14 @@
         "y": 220,
         "wires": [
             [
-                "523100a1c917dcec"
+                "fabaf1bf80f85ae4"
             ]
         ]
     },
     {
-        "id": "523100a1c917dcec",
+        "id": "fabaf1bf80f85ae4",
         "type": "file in",
-        "z": "ddd3369c16a022bc",
+        "z": "cecb72054ade7c5e",
         "name": "Read Soort CSV",
         "filename": "data/soorten_info.csv",
         "filenameType": "str",
@@ -46,38 +46,38 @@
         "sendError": false,
         "encoding": "none",
         "allProps": false,
-        "x": 350,
+        "x": 330,
         "y": 220,
         "wires": [
             [
-                "16c15c56fc94ae04"
+                "303d3f72f4c12102"
             ]
         ]
     },
     {
-        "id": "16c15c56fc94ae04",
+        "id": "303d3f72f4c12102",
         "type": "function",
-        "z": "ddd3369c16a022bc",
+        "z": "cecb72054ade7c5e",
         "name": "Process Soort Data",
-        "func": "// CSV tekst uit bericht halen en opschonen\nvar csvTekst = msg.payload.trim();\nvar gegevens = [];\n\nfunction parseerCSV(tekst) {\n    var regels = [];\n    var huidigeRegel = '';\n    var inAanhalingstekens = false;\n    var i = 0;\n\n    while (i < tekst.length) {\n        var karakter = tekst[i];\n        if (karakter === '\"') {\n            inAanhalingstekens = !inAanhalingstekens;\n            huidigeRegel += karakter;\n        } else if (karakter === '\\n' && !inAanhalingstekens) {\n            if (huidigeRegel.trim()) {\n                regels.push(huidigeRegel.trim());\n            }\n            huidigeRegel = '';\n        } else {\n            huidigeRegel += karakter;\n        }\n        i++;\n    }\n    // Laatste regel toevoegen als deze niet leeg is\n    if (huidigeRegel.trim()) {\n        regels.push(huidigeRegel.trim());\n    }\n    return regels;\n}\n\nfunction parseerCSVRij(rij) {\n    var resultaat = [];\n    var huidig = '';\n    var inAanhalingstekens = false;\n    var i = 0;\n\n    while (i < rij.length) {\n        var karakter = rij[i];\n        if (karakter === '\"') {\n            // Dubbele aanhalingstekens binnen aanhalingstekens = letterlijke aanhalingsteken\n            if (inAanhalingstekens && rij[i + 1] === '\"') {\n                huidig += '\"';\n                i++; // Extra karakter overslaan\n            } else {\n                inAanhalingstekens = !inAanhalingstekens;\n            }\n        } else if (karakter === ',' && !inAanhalingstekens) {\n            // Komma buiten aanhalingstekens = nieuwe kolom\n            resultaat.push(huidig);\n            huidig = '';\n        } else {\n            huidig += karakter;\n        }\n        i++;\n    }\n    // Laatste kolom toevoegen\n    resultaat.push(huidig);\n    return resultaat;\n}\n\ntry {\n    // CSV tekst parsen naar individuele regels\n    var regels = parseerCSV(csvTekst);\n    node.warn('CSV geparseerd naar ' + regels.length + ' regels');\n\n    // Controleren of er voldoende data is (minimaal header + 1 regel)\n    if (regels.length < 2) {\n        return { payload: [], topic: 'geen_data' };\n    }\n\n    // Door alle regels itereren (eerste regel = header, dus vanaf index 1)\n    for (var i = 1; i < regels.length; i++) {\n        var regel = regels[i];\n        if (!regel.trim()) continue; // Lege regels overslaan\n\n        // Regel parsen naar individuele kolommen\n        var kolommen = parseerCSVRij(regel);\n\n        // Controleren of er voldoende kolommen zijn voor een soort\n        if (kolommen.length >= 8) {\n            var soort = {\n                soort: kolommen[0] || 'Onbekend',\n                scientific: kolommen[1] || 'Onbekend',\n                status: kolommen[2] || 'Onbekend',\n                observations: parseInt(kolommen[3]) || 0,\n                lastSeen: kolommen[4] || 'Onbekend',\n                description: kolommen[5] || 'Geen beschrijving',\n                conservation: kolommen[6] || 'Onbekend',\n                image_url: kolommen[7] || 'Geen afbeelding'\n            };\n            gegevens.push(soort);\n        }\n    }\n\n    // Resultaat loggen en terugsturen\n    node.warn('Totaal aantal soorten verwerkt: ' + gegevens.length);\n    return { payload: gegevens, topic: 'soorten_data' };\n\n} catch (fout) {\n    // Foutafhandeling\n    node.error('Fout: ' + fout.message);\n    return { payload: [], topic: 'fout', error: fout.message };\n}",
+        "func": "// CSV tekst uit bericht halen en opschonen\nvar csvTekst = msg.payload.trim();\nvar gegevens = [];\n\nfunction parseerCSV(tekst) {\n    var regels = [];\n    var huidigeRegel = '';\n    var inAanhalingstekens = false;\n    var i = 0;\n\n    while (i < tekst.length) {\n        var karakter = tekst[i];\n        if (karakter === '\"') {\n            inAanhalingstekens = !inAanhalingstekens;\n            huidigeRegel += karakter;\n        } else if (karakter === '\\n' && !inAanhalingstekens) {\n            if (huidigeRegel.trim()) {\n                regels.push(huidigeRegel.trim());\n            }\n            huidigeRegel = '';\n        } else {\n            huidigeRegel += karakter;\n        }\n        i++;\n    }\n    // Laatste regel toevoegen als deze niet leeg is\n    if (huidigeRegel.trim()) {\n        regels.push(huidigeRegel.trim());\n    }\n    return regels;\n}\n\nfunction parseerCSVRij(rij) {\n    var resultaat = [];\n    var huidig = '';\n    var inAanhalingstekens = false;\n    var i = 0;\n\n    while (i < rij.length) {\n        var karakter = rij[i];\n        if (karakter === '\"') {\n            // Dubbele aanhalingstekens binnen aanhalingstekens = letterlijke aanhalingsteken\n            if (inAanhalingstekens && rij[i + 1] === '\"') {\n                huidig += '\"';\n                i++; // Extra karakter overslaan\n            } else {\n                inAanhalingstekens = !inAanhalingstekens;\n            }\n        } else if (karakter === ',' && !inAanhalingstekens) {\n            // Komma buiten aanhalingstekens = nieuwe kolom\n            resultaat.push(huidig);\n            huidig = '';\n        } else {\n            huidig += karakter;\n        }\n        i++;\n    }\n    // Laatste kolom toevoegen\n    resultaat.push(huidig);\n    return resultaat;\n}\n\n// CSV tekst parsen naar individuele regels\nvar regels = parseerCSV(csvTekst);\nnode.warn('CSV geparseerd naar ' + regels.length + ' regels');\n\n// Controleren of er voldoende data is (minimaal header + 1 regel)\nif (regels.length < 2) {\n    return { payload: [], topic: 'geen_data' };\n}\n\n// Door alle regels itereren (eerste regel = header, dus vanaf index 1)\nfor (var i = 1; i < regels.length; i++) {\n    var regel = regels[i];\n    if (!regel.trim()) continue; // Lege regels overslaan\n\n    // Regel parsen naar individuele kolommen\n    var kolommen = parseerCSVRij(regel);\n\n    // Controleren of er voldoende kolommen zijn voor een soort\n    if (kolommen.length >= 8) {\n        var soort = {\n            soort: kolommen[0] || 'Onbekend',\n            scientific: kolommen[1] || 'Onbekend',\n            status: kolommen[2] || 'Onbekend',\n            observations: parseInt(kolommen[3]) || 0,\n            lastSeen: kolommen[4] || 'Onbekend',\n            description: kolommen[5] || 'Geen beschrijving',\n            conservation: kolommen[6] || 'Onbekend',\n            image_url: kolommen[7] || 'Geen afbeelding'\n        };\n        gegevens.push(soort);\n    }\n}\n\n// Resultaat loggen en terugsturen\nnode.warn('Totaal aantal soorten verwerkt: ' + gegevens.length);\nreturn { payload: gegevens, topic: 'soorten_data' };",
         "outputs": 1,
         "timeout": "",
         "noerr": 0,
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 550,
+        "x": 530,
         "y": 220,
         "wires": [
             [
-                "5e5bc6a6f352030d"
+                "2f6df57beb958599"
             ]
         ]
     },
     {
-        "id": "5e5bc6a6f352030d",
+        "id": "2f6df57beb958599",
         "type": "ui_template",
-        "z": "ddd3369c16a022bc",
+        "z": "cecb72054ade7c5e",
         "group": "b6f97192dcfaab52",
         "name": "Soort Display",
         "order": 1,
@@ -89,16 +89,16 @@
         "resendOnRefresh": true,
         "templateScope": "local",
         "className": "",
-        "x": 750,
+        "x": 710,
         "y": 220,
         "wires": [
             []
         ]
     },
     {
-        "id": "a35562537cc70aea",
+        "id": "95f7180c02dab26f",
         "type": "ui_button",
-        "z": "ddd3369c16a022bc",
+        "z": "cecb72054ade7c5e",
         "name": "Load Biodiversity",
         "group": "09546c12f4874d7b",
         "order": 1,
@@ -119,14 +119,14 @@
         "y": 100,
         "wires": [
             [
-                "608a62f06f115195"
+                "1a545034aa74cc98"
             ]
         ]
     },
     {
-        "id": "608a62f06f115195",
+        "id": "1a545034aa74cc98",
         "type": "file in",
-        "z": "ddd3369c16a022bc",
+        "z": "cecb72054ade7c5e",
         "name": "Read CSV",
         "filename": "data/waarnemingen_4_2024.csv",
         "filenameType": "str",
@@ -138,16 +138,16 @@
         "y": 100,
         "wires": [
             [
-                "9f46b2fdf9fbc962"
+                "c3ea536fea36d79c"
             ]
         ]
     },
     {
-        "id": "9f46b2fdf9fbc962",
+        "id": "c3ea536fea36d79c",
         "type": "function",
-        "z": "ddd3369c16a022bc",
+        "z": "cecb72054ade7c5e",
         "name": "Process Biodiversity Data",
-        "func": "// CSV regels splitsen en lege regels filteren\nvar regels = msg.payload.split('\\n').filter(regel => regel.trim());\nvar gegevens = [];\n\n// Door alle regels itereren (eerste regel = header, dus vanaf index 1)\nfor (var i = 1; i < regels.length; i++) {\n    var kolommen = regels[i].split(';');\n\n    // Controleren of er voldoende kolommen zijn\n    if (kolommen.length >= 3) {\n        // Soortnaam en wetenschappelijke naam splitsen (gescheiden door \" - \")\n        var naamDelen = kolommen[0].split(' - ');\n        var soort = naamDelen[0].trim();\n        var wetenschappelijk = naamDelen[1] ? naamDelen[1].trim() : '';\n        var aantal = parseInt(kolommen[1]) || 0;\n        var datum = kolommen[2].trim();\n\n        // Soortgegevens toevoegen aan de gegevensarray\n        gegevens.push({\n            soort: soort,\n            wetenschappelijk: wetenschappelijk,\n            aantal: aantal,\n            datum: datum\n        });\n    }\n}\n\n// Sorteer voor meest waargenomen soorten (top 10)\nvar gesorteerHoog = gegevens.slice().sort((a, b) => b.aantal - a.aantal);\nvar topSoorten = gesorteerHoog.slice(0, 10);\n\n// Maak grafiek berichten voor de meest waargenomen soorten\nvar grafiekBerichten = [];\nfor (var i = 0; i < topSoorten.length; i++) {\n    grafiekBerichten.push({\n        payload: topSoorten[i].aantal,\n        topic: topSoorten[i].soort\n    });\n}\n\n// Sorteer voor zeldzame soorten (laagste aantallen)\nvar gesorteerLaag = gegevens.slice().sort((a, b) => a.aantal - b.aantal);\nvar zeldzameSoorten = gesorteerLaag.slice(0, 10);\n\n// Verstuur grafiek data voor top soorten\nfor (var j = 0; j < grafiekBerichten.length; j++) {\n    node.send([grafiekBerichten[j], null]);\n}\n\n// Verstuur tabel data voor zeldzame soorten\nreturn [null, { payload: zeldzameSoorten, topic: 'tabel' }];",
+        "func": "// CSV regels splitsen en lege regels filteren\nvar regels = msg.payload.split('\\n');\nregels = regels.filter(regel => regel.trim());\nvar gegevens = [];\n\n// Door alle regels itereren (eerste regel = header, dus vanaf index 1)\nfor (var i = 1; i < regels.length; i++) {\n    var kolommen = regels[i].split(';');\n\n    // Controleren of er voldoende kolommen zijn\n    if (kolommen.length >= 3) {\n        // Soortnaam en wetenschappelijke naam splitsen (gescheiden door \" - \")\n        var naamDelen = kolommen[0].split(' - ');\n        var soort = naamDelen[0].trim();\n        var wetenschappelijk = naamDelen[1] ? naamDelen[1].trim() : '';\n        var aantal = parseInt(kolommen[1]) || 0;\n        var datum = kolommen[2].trim();\n\n        // Soortgegevens toevoegen aan de gegevensarray\n        gegevens.push({soort: soort, wetenschappelijk: wetenschappelijk, aantal: aantal, datum: datum});\n    }\n}\n\n// Sorteer voor meest waargenomen soorten (top 10)\nvar gesorteerHoog = gegevens.slice().sort((a, b) => b.aantal - a.aantal);\nvar topSoorten = gesorteerHoog.slice(0, 10);\n\n// Maak grafiek berichten voor de meest waargenomen soorten\nvar grafiekBerichten = [];\nfor (var i = 0; i < topSoorten.length; i++) {\n    grafiekBerichten.push({payload: topSoorten[i].aantal, topic: topSoorten[i].soort});\n}\n\n// Sorteer voor zeldzame soorten (laagste aantallen)\nvar gesorteerLaag = gegevens.slice().sort((a, b) => a.aantal - b.aantal);\nvar zeldzameSoorten = gesorteerLaag.slice(0, 10);\n\n// Verstuur grafiek data voor top soorten\nfor (var j = 0; j < grafiekBerichten.length; j++) {\n    node.send([grafiekBerichten[j], null]);\n}\n\n// Verstuur tabel data voor zeldzame soorten\nreturn [null, { payload: zeldzameSoorten, topic: 'tabel' }];",
         "outputs": 2,
         "timeout": "",
         "noerr": 0,
@@ -158,17 +158,17 @@
         "y": 100,
         "wires": [
             [
-                "80fc506b9758a88e"
+                "6763d358f39c9ea8"
             ],
             [
-                "9389a48a99be09cb"
+                "03d3a11f9ff3cd44"
             ]
         ]
     },
     {
-        "id": "80fc506b9758a88e",
+        "id": "6763d358f39c9ea8",
         "type": "ui_chart",
-        "z": "ddd3369c16a022bc",
+        "z": "cecb72054ade7c5e",
         "name": "Soortenrijkdom Chart",
         "group": "04644e41071ad5cc",
         "order": 1,
@@ -210,9 +210,9 @@
         ]
     },
     {
-        "id": "9389a48a99be09cb",
+        "id": "03d3a11f9ff3cd44",
         "type": "ui_template",
-        "z": "ddd3369c16a022bc",
+        "z": "cecb72054ade7c5e",
         "group": "4654b640b7594b1f",
         "name": "Zeldzame Soorten Tabel",
         "order": 1,
