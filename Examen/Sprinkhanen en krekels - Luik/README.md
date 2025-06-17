@@ -108,8 +108,8 @@ seizoensanalyse.seizoensanalyse("Veldkrekel", 2022)
 
 **Seizoensdefinities:**
 - **Lente**: 21 maart - 20 juni
-- **Zomer**: 21 juni - 22 september  
-- **Herfst**: 23 september - 20 december
+- **Zomer**: 21 juni - 20 september  
+- **Herfst**: 21 september - 20 december
 - **Winter**: 21 december - 20 maart
 
 ---

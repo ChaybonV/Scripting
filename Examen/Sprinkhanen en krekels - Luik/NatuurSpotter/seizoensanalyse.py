@@ -73,9 +73,9 @@ def seizoensanalyse(soort, jaar):
             # Het seizoen bepalen op basis van maand en dag
             if (maand == 3 and dag >= 21) or maand in [4, 5] or (maand == 6 and dag <= 20):
                 telling["Lente"] += 1
-            elif (maand == 6 and dag >= 21) or maand in [7, 8] or (maand == 9 and dag <= 22):
+            elif (maand == 6 and dag >= 21) or maand in [7, 8] or (maand == 9 and dag <= 20):
                 telling["Zomer"] += 1
-            elif (maand == 9 and dag >= 23) or maand in [10, 11] or (maand == 12 and dag <= 20):
+            elif (maand == 9 and dag >= 21) or maand in [10, 11] or (maand == 12 and dag <= 20):
                 telling["Herfst"] += 1
             else:  # Winter: 21 dec - 20 maart
                 telling["Winter"] += 1
