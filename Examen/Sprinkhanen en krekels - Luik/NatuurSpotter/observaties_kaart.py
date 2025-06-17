@@ -29,7 +29,7 @@ def observaties_kaart(dag=None):
     if dag is None:
         dag = datetime.today().strftime('%Y-%m-%d')
     
-    # URL samenstellen voor waarnemingen.be (soortgroep 14 = vogels, land 22 = België (Luik))
+    # URL samenstellen voor waarnemingen.be (soortgroep 14 = Sprinkhanen en Krekels, land 22 = België (Luik))
     url = f"https://waarnemingen.be/fieldwork/observations/daylist/?date={dag}&species_group=14&country_division=22"
     response = requests.get(url)
     soup = BeautifulSoup(response.text, "html.parser")

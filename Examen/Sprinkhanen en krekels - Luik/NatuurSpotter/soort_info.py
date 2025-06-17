@@ -50,7 +50,7 @@ def soort_info(soort):
     resp = requests.get(soort_url)
     soup = BeautifulSoup(resp.text, "html.parser")
     
-    # Controleer of dit een springhaan/krekel is (soortgroep 14)
+    # Controleer of dit een Sprinkhaan/Krekel is (soortgroep 14)
     soortgroep_link = soup.find("a", href="/species/search/?species_group=14")
     if not soortgroep_link:
         print("Deze soort behoort niet tot de soortgroep 'Sprinkhanen en krekels'")

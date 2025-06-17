@@ -1,13 +1,14 @@
-# NatuurSpotter 🦗🐦
+# NatuurSpotter 🦗
 
 Een Python package voor het analyseren en visualiseren van natuurwaarnemingen in de provincie Luik, België. Deze tool haalt data op van waarnemingen.be en Wikipedia om uitgebreide rapporten en visualisaties te genereren.
+Dit project is gemaakt voor het vak Scripting binnen de opleiding Applied Data Intelligence aan Thomas More Mechelen.
 
 ## 📋 Overzicht
 
 NatuurSpotter biedt vier hoofdfuncties voor natuuronderzoek:
 
 - **Soortinformatie**: Gedetailleerde rapporten over specifieke diersoorten
-- **Interactieve kaarten**: Visualisatie van waarnemingen op een bepaalde dag
+- **Interactieve observatie kaarten**: Visualisatie van waarnemingen op een bepaalde dag
 - **Seizoensanalyse**: Patronen in waarnemingen doorheen het jaar
 - **Biodiversiteitsanalyse**: Soortenrijkdom per maand
 
@@ -52,6 +53,9 @@ Genereert een uitgebreid rapport over een specifieke diersoort met informatie va
 ```python
 soort_info.soort_info("Wrattenbijter")
 ```
+
+**Parameters:**
+- `soort`: Naam van een bestaande Sprinkhaan of Krekel
 
 **Output:**
 - PDF-rapport met soortbeschrijving, foto en waarnemingstabel
@@ -134,7 +138,7 @@ biodiversiteit_analyse.biodiversiteit_analyse("april", 2024)
 
 ## 📁 Output Bestanden
 
-Alle gegenereerde bestanden worden opgeslagen in de `data/` map:
+Alle gegenereerde bestanden worden opgeslagen in de `data/` map (voorbeeld):
 
 ```
 data/
@@ -165,8 +169,8 @@ data/
 - `geopy`: Geocoding van plaatsnamen
 
 ### Beperkingen:
-- Focust op provincie Luik (country_division=22)
-- Soortgroep 14 (vogels) voor biodiversiteitsanalyse
+- Focust op provincie 22 (Luik)
+- Focust op Soortgroep 14 (Sprinkhanen en Krekels)
 - Rate limiting voor geocoding (1 request/seconde)
 - Vereist internet verbinding
 
@@ -185,7 +189,6 @@ headers = {
 De gegenereerde CSV-bestanden zijn geoptimaliseerd voor gebruik in Node-RED:
 - Alle velden zijn gequote voor betrouwbare parsing
 - Puntkomma als separator
-- UTF-8 encoding voor speciale karakters
 
 ## ⚠️ Gebruiksvoorwaarden
 
@@ -194,4 +197,4 @@ Let op de gebruiksvoorwaarden van:
 - Wikipedia
 - External API providers
 
-Respecteer rate limits en gebruik de tool verantwoordelijk voor onderzoeks- en educatieve doeleinden.
+Respecteer rate limits en gebruik de tool verantwoordelijk voor onderzoeks- en educatieve doeleinden. Andere doeleinden zijn zeker mogelijk.
