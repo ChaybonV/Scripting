@@ -40,8 +40,8 @@ def soort_info(soort):
     zoek_soup = BeautifulSoup(zoek_resp.text, "html.parser")
     
     # Vind het eerste zoekresultaat
-    lijstitem = zoek_soup.find("li", class_="lead")                
-    a_tag = lijstitem.find("a", href=True)        
+    lijstitem = zoek_soup.find("li", class_="lead")
+    a_tag = lijstitem.find("a", href=True)
     href = a_tag["href"]
     soort_id = href.strip("/").split("/")[-1]
     
@@ -130,7 +130,7 @@ def soort_info(soort):
         for p in paragraphs:
             text = p.get_text().strip()
             # Zoek naar relevante alinea's (min. 50 chars, bevat relevante keywords)
-            if len(text) > 50 and any(keyword in text.lower() for keyword in ['springhaan', 'familie', 'soort', 'kleur', 'lang']):
+            if len(text) > 50 and any(keyword in text.lower() for keyword in ['sprinkhaan', 'Krekel', 'familie', 'soort', 'kleur', 'lang']):
                 wiki_beschrijving = text.replace('\n', ' ').strip()
                 # Beperk tot eerste 3 zinnen voor leesbaarheid
                 zinnen = wiki_beschrijving.split('. ')
@@ -148,7 +148,7 @@ def soort_info(soort):
         else:
             volledige_beschrijving = beschrijving
     
-    # Alle data correct formatteren voor CSV file (dit hebben we nodig voor gebruik in node-red)    
+    # Alle data correct formatteren voor CSV file (dit hebben we nodig voor gebruik in node-red)
     if not volledige_beschrijving:
         volledige_beschrijving = "Geen beschrijving beschikbaar"
     
